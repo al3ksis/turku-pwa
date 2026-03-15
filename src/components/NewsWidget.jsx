@@ -45,7 +45,7 @@ export default function NewsWidget() {
     return (
       <div className="news-widget card">
         <div className="news-header">
-          <span className="news-icon">📰</span>
+          <img src="/yle-logo.svg" alt="Yle" className="news-logo" />
           <h2>Uutiset</h2>
         </div>
         <div className="news-loading">
@@ -61,7 +61,7 @@ export default function NewsWidget() {
     return (
       <div className="news-widget card">
         <div className="news-header">
-          <span className="news-icon">📰</span>
+          <img src="/yle-logo.svg" alt="Yle" className="news-logo" />
           <h2>Uutiset</h2>
         </div>
         <div className="news-error">
@@ -75,7 +75,7 @@ export default function NewsWidget() {
   return (
     <div className="news-widget card">
       <div className="news-header">
-        <span className="news-icon">📰</span>
+        <img src="/yle-logo.svg" alt="Yle" className="news-logo" />
         <h2>Uutiset</h2>
       </div>
       <div className="news-list">

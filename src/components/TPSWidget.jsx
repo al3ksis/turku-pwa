@@ -98,7 +98,7 @@ export default function TPSWidget() {
     return (
       <div className="tps-widget card">
         <div className="tps-header">
-          <span className="tps-icon">🏒</span>
+          <img src="/tps-logo.svg" alt="TPS" className="tps-logo" />
           <h2>HC TPS</h2>
         </div>
         <div className="tps-loading">
@@ -114,7 +114,7 @@ export default function TPSWidget() {
     return (
       <div className="tps-widget card">
         <div className="tps-header">
-          <span className="tps-icon">🏒</span>
+          <img src="/tps-logo.svg" alt="TPS" className="tps-logo" />
           <h2>HC TPS</h2>
         </div>
         <div className="tps-error">
@@ -129,7 +129,7 @@ export default function TPSWidget() {
     return (
       <div className="tps-widget card">
         <div className="tps-header">
-          <span className="tps-icon">🏒</span>
+          <img src="/tps-logo.svg" alt="TPS" className="tps-logo" />
           <h2>HC TPS</h2>
         </div>
         <p className="no-games">Ei tulevia otteluita</p>
@@ -145,7 +145,7 @@ export default function TPSWidget() {
   return (
     <div className="tps-widget card">
       <div className="tps-header">
-        <span className="tps-icon">🏒</span>
+        <img src="/tps-logo.svg" alt="TPS" className="tps-logo" />
         <h2>HC TPS</h2>
       </div>
       <div className="games">
