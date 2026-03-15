@@ -1,0 +1,101 @@
+.weather-widget {
+  margin-bottom: 16px;
+}
+
+.weather-current {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.weather-icon {
+  font-size: 48px;
+}
+
+.weather-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.temp {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.condition {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.wind {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.wind-icon {
+  font-size: 16px;
+}
+
+.weather-tomorrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.tomorrow-label {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.tomorrow-icon {
+  font-size: 20px;
+}
+
+.tomorrow-temps {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-left: auto;
+}
+
+/* Loading */
+.weather-loading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.skeleton-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--border) 25%, var(--card-hover) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-text {
+  flex: 1;
+  height: 36px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--card-hover) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.weather-error {
+  text-align: center;
+  padding: 16px;
+}
+
+.weather-error p {
+  color: var(--error);
+  margin-bottom: 12px;
+}

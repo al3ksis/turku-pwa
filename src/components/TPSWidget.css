@@ -1,0 +1,145 @@
+.tps-widget {
+  margin-bottom: 16px;
+}
+
+.tps-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tps-header h2 {
+  font-size: 18px;
+}
+
+.tps-icon {
+  font-size: 20px;
+}
+
+.games {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.game-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.game-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+}
+
+.weekday {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.date {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.game-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.opponent {
+  font-weight: 500;
+}
+
+.location {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.location.home {
+  color: var(--accent-green);
+}
+
+.location.away {
+  color: var(--text-muted);
+}
+
+.game-time {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* Loading */
+.tps-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-row {
+  height: 56px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--card-hover) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Error */
+.tps-error {
+  text-align: center;
+  padding: 16px;
+}
+
+.tps-error p {
+  color: var(--error);
+  margin-bottom: 12px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* No games */
+.no-games {
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.tps-links {
+  display: flex;
+  justify-content: center;
+}
+
+.tps-link {
+  background: var(--accent);
+  color: #000;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+}

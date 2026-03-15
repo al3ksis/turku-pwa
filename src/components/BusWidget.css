@@ -1,0 +1,191 @@
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.bus-widget {
+  margin-bottom: 16px;
+}
+
+.bus-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.bus-header > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bus-header h2 {
+  font-size: 18px;
+}
+
+.bus-icon {
+  font-size: 20px;
+}
+
+.settings-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  padding: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.settings-btn:hover {
+  opacity: 1;
+}
+
+.departures {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.departure-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.line-badge {
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  min-width: 36px;
+  text-align: center;
+}
+
+.destination {
+  color: var(--text-secondary);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.minutes {
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 50px;
+  text-align: right;
+}
+
+.minutes.soon {
+  color: var(--accent-green);
+}
+
+/* Loading skeleton */
+.bus-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-row {
+  height: 32px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--card-hover) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Error state */
+.bus-error {
+  text-align: center;
+  padding: 16px;
+}
+
+.bus-error p {
+  color: var(--error);
+  margin-bottom: 12px;
+}
+
+/* Settings */
+.bus-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bus-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.bus-settings input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--text);
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.bus-settings input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.bus-settings .hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.bus-settings .hint a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.bus-settings .hint a:hover {
+  text-decoration: underline;
+}
+
+.settings-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary,
+.btn-secondary {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+}
+
+.btn-secondary {
+  background: var(--border);
+  color: var(--text);
+}
