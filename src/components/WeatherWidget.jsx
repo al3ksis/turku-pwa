@@ -142,7 +142,6 @@ export default function WeatherWidget() {
       <div className="weather-extra">
         {uvLevel && (
           <div className="extra-item">
-            <span className="extra-icon">☀️</span>
             <span className="extra-label">UV</span>
             <span className="extra-value" style={{ color: uvLevel.color }}>
               {Math.round(uv)} - {uvLevel.text}
@@ -151,13 +150,11 @@ export default function WeatherWidget() {
         )}
         {pollenTypes.length > 0 ? (
           <div className="extra-item">
-            <span className="extra-icon">🌸</span>
             <span className="extra-label">Siitepöly</span>
             <span className="extra-value">{pollenTypes.join(', ')}</span>
           </div>
         ) : (
           <div className="extra-item">
-            <span className="extra-icon">🌸</span>
             <span className="extra-label">Siitepöly</span>
             <span className="extra-value muted">Ei merkittävää</span>
           </div>
