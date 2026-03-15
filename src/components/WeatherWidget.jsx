@@ -5,7 +5,7 @@ import './WeatherWidget.css'
 const TURKU_LAT = 60.4518
 const TURKU_LON = 22.2666
 
-const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&timezone=Europe/Helsinki`
+const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=Europe/Helsinki`
 
 const AIR_QUALITY_URL = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=uv_index,birch_pollen,grass_pollen,alder_pollen&timezone=Europe/Helsinki`
 
