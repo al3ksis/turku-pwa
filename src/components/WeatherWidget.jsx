@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { fetchWithTimeout } from '../utils/fetch'
 import './WeatherWidget.css'
 
 const TURKU_LAT = 60.4518
@@ -41,8 +42,8 @@ function getWeather(code) {
 
 function getUvLevel(uv) {
   if (uv < 3) return { text: 'Matala', color: 'var(--accent-green)' }
-  if (uv < 6) return { text: 'Kohtalainen', color: '#ffcc00' }
-  if (uv < 8) return { text: 'Korkea', color: '#ff9900' }
+  if (uv < 6) return { text: 'Kohtalainen', color: 'var(--accent-yellow)' }
+  if (uv < 8) return { text: 'Korkea', color: 'var(--accent-orange)' }
   return { text: 'Erittäin korkea', color: 'var(--error)' }
 }
 
@@ -63,8 +64,8 @@ export default function WeatherWidget() {
     try {
       setError(null)
       const [weatherRes, airRes] = await Promise.all([
-        fetch(WEATHER_URL),
-        fetch(AIR_QUALITY_URL)
+        fetchWithTimeout(WEATHER_URL),
+        fetchWithTimeout(AIR_QUALITY_URL)
       ])
 
       if (!weatherRes.ok) throw new Error('Sään haku epäonnistui')

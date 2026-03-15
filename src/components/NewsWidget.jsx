@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
+import { fetchWithTimeout } from '../utils/fetch'
 import './NewsWidget.css'
 
 // Turku concept ID: 18-176134
 const YLE_RSS = 'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_UUTISET&concepts=18-176134'
 const RSS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(YLE_RSS)}`
+const MAX_NEWS_SHOWN = 4
 
 function parseRSS(xmlText) {
   const parser = new DOMParser()
   const xml = parser.parseFromString(xmlText, 'text/xml')
   const items = xml.querySelectorAll('item')
 
-  return Array.from(items).slice(0, 4).map(item => ({
+  return Array.from(items).slice(0, MAX_NEWS_SHOWN).map(item => ({
     title: item.querySelector('title')?.textContent || '',
     url: item.querySelector('link')?.textContent || '',
     source: 'Yle'
@@ -25,7 +27,7 @@ export default function NewsWidget() {
   async function fetchNews() {
     try {
       setError(null)
-      const res = await fetch(RSS_URL)
+      const res = await fetchWithTimeout(RSS_URL)
       if (!res.ok) throw new Error('Uutisten haku epäonnistui')
       const text = await res.text()
       const items = parseRSS(text)

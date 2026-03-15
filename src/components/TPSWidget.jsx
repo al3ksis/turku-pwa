@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { fetchWithTimeout } from '../utils/fetch'
 import './TPSWidget.css'
 
 const TPS_ICS = 'https://hc.tps.fi/fi-fi/?action=getContent&type=exportcalendar&format=ics&levelId=64&season=2026'
 const ICS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(TPS_ICS)}`
+const MAX_GAMES_SHOWN = 3
 
 function parseICS(icsText) {
   const events = []
@@ -60,7 +62,7 @@ export default function TPSWidget() {
   async function fetchGames() {
     try {
       setError(null)
-      const res = await fetch(ICS_URL)
+      const res = await fetchWithTimeout(ICS_URL)
       if (!res.ok) throw new Error('Haku epäonnistui')
       const text = await res.text()
       const events = parseICS(text)
@@ -70,7 +72,7 @@ export default function TPSWidget() {
       const upcoming = events
         .filter(e => e.start > now)
         .sort((a, b) => a.start - b.start)
-        .slice(0, 3)
+        .slice(0, MAX_GAMES_SHOWN)
 
       setGames(upcoming)
     } catch (err) {

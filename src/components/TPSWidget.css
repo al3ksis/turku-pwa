@@ -88,17 +88,8 @@
   gap: 12px;
 }
 
-.skeleton-row {
+.tps-widget .skeleton-row {
   height: 56px;
-  background: linear-gradient(90deg, var(--border) 25%, var(--card-hover) 50%, var(--border) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8px;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }
 
 /* Error */
@@ -110,17 +101,6 @@
 .tps-error p {
   color: var(--error);
   margin-bottom: 12px;
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: #000;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
 }
 
 /* No games */

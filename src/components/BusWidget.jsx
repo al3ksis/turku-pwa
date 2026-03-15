@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react'
+import { fetchWithTimeout } from '../utils/fetch'
 import './BusWidget.css'
 
 const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
+const REFRESH_INTERVAL_MS = 30000
+const DEPARTURES_COUNT = 4
+const SOON_THRESHOLD_MINUTES = 5
 
 // API key: environment variable (default) or localStorage (override)
 const getApiKey = () => localStorage.getItem('digitransitApiKey') || import.meta.env.VITE_DIGITRANSIT_API_KEY || ''
 
 const query = `
-query GetDepartures($stopId: String!) {
+query GetDepartures($stopId: String!, $numberOfDepartures: Int!) {
   stop(id: $stopId) {
     name
-    stoptimesWithoutPatterns(numberOfDepartures: 4) {
+    stoptimesWithoutPatterns(numberOfDepartures: $numberOfDepartures) {
       scheduledDeparture
       realtimeDeparture
       realtime
@@ -62,13 +66,13 @@ export default function BusWidget() {
 
     try {
       setError(null)
-      const res = await fetch(DIGITRANSIT_URL, {
+      const res = await fetchWithTimeout(DIGITRANSIT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'digitransit-subscription-key': apiKey
         },
-        body: JSON.stringify({ query, variables: { stopId } })
+        body: JSON.stringify({ query, variables: { stopId, numberOfDepartures: DEPARTURES_COUNT } })
       })
       const json = await res.json()
       if (json.errors) {
@@ -87,7 +91,7 @@ export default function BusWidget() {
 
   useEffect(() => {
     fetchDepartures()
-    const interval = setInterval(fetchDepartures, 30000)
+    const interval = setInterval(fetchDepartures, REFRESH_INTERVAL_MS)
     return () => clearInterval(interval)
   }, [stopId])
 
@@ -183,7 +187,7 @@ export default function BusWidget() {
                 <span className="line-badge">{dep.trip.route.shortName}</span>
                 <span className="destination">{dep.headsign}</span>
                 <span className="time">{formatTime(dep.serviceDay, depSeconds)}</span>
-                <span className={`minutes ${minutes <= 5 ? 'soon' : ''}`}>
+                <span className={`minutes ${minutes <= SOON_THRESHOLD_MINUTES ? 'soon' : ''}`}>
                   {minutes} min
                 </span>
               </div>
