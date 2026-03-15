@@ -41,27 +41,37 @@
   font-size: 16px;
 }
 
-.weather-tomorrow {
+.weather-extra {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
 }
 
-.tomorrow-label {
+.extra-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.extra-icon {
+  font-size: 16px;
+  width: 24px;
+}
+
+.extra-label {
   color: var(--text-muted);
   font-size: 14px;
+  min-width: 70px;
 }
 
-.tomorrow-icon {
-  font-size: 20px;
-}
-
-.tomorrow-temps {
-  color: var(--text-secondary);
+.extra-value {
   font-size: 14px;
-  margin-left: auto;
+}
+
+.extra-value.muted {
+  color: var(--text-muted);
 }
 
 /* Loading */
