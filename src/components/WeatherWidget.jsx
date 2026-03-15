@@ -49,9 +49,9 @@ function getUvLevel(uv) {
 
 function getPollenLevel(value) {
   if (!value || value < 10) return null
-  if (value < 30) return 'vähän'
-  if (value < 60) return 'kohtalaisesti'
-  return 'runsaasti'
+  if (value < 30) return { text: 'vähän', color: 'var(--accent-yellow)' }
+  if (value < 60) return { text: 'kohtalaisesti', color: 'var(--accent-orange)' }
+  return { text: 'runsaasti', color: 'var(--error)' }
 }
 
 export default function WeatherWidget() {
@@ -117,14 +117,11 @@ export default function WeatherWidget() {
   const uvLevel = uv != null ? getUvLevel(uv) : null
 
   // Check pollen levels
-  const birch = getPollenLevel(airQuality?.current?.birch_pollen)
-  const grass = getPollenLevel(airQuality?.current?.grass_pollen)
-  const alder = getPollenLevel(airQuality?.current?.alder_pollen)
-
-  const pollenTypes = []
-  if (birch) pollenTypes.push(`Koivu: ${birch}`)
-  if (grass) pollenTypes.push(`Heinä: ${grass}`)
-  if (alder) pollenTypes.push(`Leppä: ${alder}`)
+  const pollenData = [
+    { name: 'Koivu', level: getPollenLevel(airQuality?.current?.birch_pollen) },
+    { name: 'Heinä', level: getPollenLevel(airQuality?.current?.grass_pollen) },
+    { name: 'Leppä', level: getPollenLevel(airQuality?.current?.alder_pollen) }
+  ].filter(p => p.level !== null)
 
   return (
     <div className="weather-widget card">
@@ -148,10 +145,17 @@ export default function WeatherWidget() {
             </span>
           </div>
         )}
-        {pollenTypes.length > 0 ? (
+        {pollenData.length > 0 ? (
           <div className="extra-item">
             <span className="extra-label">Siitepöly</span>
-            <span className="extra-value">{pollenTypes.join(', ')}</span>
+            <span className="extra-value pollen-list">
+              {pollenData.map((p, i) => (
+                <span key={p.name}>
+                  {p.name}: <span style={{ color: p.level.color }}>{p.level.text}</span>
+                  {i < pollenData.length - 1 && ', '}
+                </span>
+              ))}
+            </span>
           </div>
         ) : (
           <div className="extra-item">
