@@ -3,9 +3,8 @@ import './BusWidget.css'
 
 const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
 
-// API key from https://portal-api.digitransit.fi/
-// Store in localStorage as 'digitransitApiKey'
-const getApiKey = () => localStorage.getItem('digitransitApiKey') || ''
+// API key: environment variable (default) or localStorage (override)
+const getApiKey = () => localStorage.getItem('digitransitApiKey') || import.meta.env.VITE_DIGITRANSIT_API_KEY || ''
 
 const query = `
 query GetDepartures($stopId: String!) {
