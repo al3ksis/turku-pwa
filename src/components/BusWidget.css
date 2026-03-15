@@ -25,8 +25,10 @@
   font-size: 18px;
 }
 
-.bus-icon {
-  font-size: 20px;
+.bus-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
 }
 
 .settings-btn {

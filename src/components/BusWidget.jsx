@@ -144,7 +144,7 @@ export default function BusWidget() {
     <div className="bus-widget card">
       <div className="bus-header">
         <div>
-          <span className="bus-icon">🚌</span>
+          <img src="/foli-logo.svg" alt="Föli" className="bus-logo" />
           <h2>{loading ? 'Ladataan...' : data?.name || 'Bussit'}</h2>
         </div>
         <button className="settings-btn" onClick={() => setShowSettings(true)} title="Asetukset">
