@@ -5,7 +5,7 @@ import './WeatherWidget.css'
 const TURKU_LAT = 60.4518
 const TURKU_LON = 22.2666
 
-const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=Europe/Helsinki`
+const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&wind_speed_unit=ms&timezone=Europe/Helsinki&forecast_days=1`
 
 const AIR_QUALITY_URL = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=uv_index,birch_pollen,grass_pollen,alder_pollen&timezone=Europe/Helsinki`
 
@@ -54,11 +54,36 @@ function getPollenLevel(value) {
   return { text: 'runsaasti', color: 'var(--error)' }
 }
 
+function getHourlyForecast(hourlyData) {
+  if (!hourlyData) return []
+
+  const now = new Date()
+  const currentHour = now.getHours()
+
+  const forecast = []
+  for (let i = 0; i < hourlyData.time.length; i++) {
+    const time = new Date(hourlyData.time[i])
+    const hour = time.getHours()
+
+    // Only show from current hour to end of day (23:00)
+    if (hour >= currentHour) {
+      forecast.push({
+        hour,
+        temp: Math.round(hourlyData.temperature_2m[i]),
+        weatherCode: hourlyData.weather_code[i],
+        precipitation: hourlyData.precipitation_probability[i]
+      })
+    }
+  }
+  return forecast
+}
+
 export default function WeatherWidget() {
   const [weather, setWeather] = useState(null)
   const [airQuality, setAirQuality] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showHourly, setShowHourly] = useState(false)
 
   async function fetchData() {
     try {
@@ -112,6 +137,7 @@ export default function WeatherWidget() {
 
   const current = weather.current
   const weatherInfo = getWeather(current.weather_code)
+  const hourlyForecast = getHourlyForecast(weather.hourly)
 
   const uv = airQuality?.current?.uv_index
   const uvLevel = uv != null ? getUvLevel(uv) : null
@@ -125,17 +151,41 @@ export default function WeatherWidget() {
 
   return (
     <div className="weather-widget card">
-      <div className="weather-current">
+      <div
+        className="weather-current clickable"
+        onClick={() => setShowHourly(!showHourly)}
+      >
         <span className="weather-icon">{weatherInfo.icon}</span>
         <div className="weather-info">
           <span className="temp">{Math.round(current.temperature_2m)}°</span>
           <span className="condition">{weatherInfo.text}</span>
         </div>
-        <div className="wind">
-          <span className="wind-icon">💨</span>
-          <span>{Math.round(current.wind_speed_10m)} m/s</span>
+        <div className="weather-right">
+          <div className="wind">
+            <span className="wind-icon">💨</span>
+            <span>{Math.round(current.wind_speed_10m)} m/s</span>
+          </div>
+          <span className={`expand-icon ${showHourly ? 'expanded' : ''}`}>▼</span>
         </div>
       </div>
+
+      {showHourly && hourlyForecast.length > 0 && (
+        <div className="hourly-forecast">
+          <div className="hourly-scroll">
+            {hourlyForecast.map((h) => (
+              <div key={h.hour} className="hourly-item">
+                <span className="hourly-time">{h.hour}:00</span>
+                <span className="hourly-icon">{getWeather(h.weatherCode).icon}</span>
+                <span className="hourly-temp">{h.temp}°</span>
+                {h.precipitation > 0 && (
+                  <span className="hourly-precip">{h.precipitation}%</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="weather-extra">
         {uvLevel && (
           <div className="extra-item">
