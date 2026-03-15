@@ -138,20 +138,6 @@
   border-color: var(--accent);
 }
 
-.bus-settings .hint {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.bus-settings .hint a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.bus-settings .hint a:hover {
-  text-decoration: underline;
-}
-
 .settings-buttons {
   display: flex;
   gap: 12px;

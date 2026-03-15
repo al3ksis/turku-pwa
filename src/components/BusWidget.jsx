@@ -7,8 +7,7 @@ const REFRESH_INTERVAL_MS = 30000
 const DEPARTURES_COUNT = 4
 const SOON_THRESHOLD_MINUTES = 5
 
-// API key: environment variable (default) or localStorage (override)
-const getApiKey = () => localStorage.getItem('digitransitApiKey') || import.meta.env.VITE_DIGITRANSIT_API_KEY || ''
+const API_KEY = import.meta.env.VITE_DIGITRANSIT_API_KEY || ''
 
 const query = `
 query GetDepartures($stopId: String!, $numberOfDepartures: Int!) {
@@ -54,23 +53,15 @@ export default function BusWidget() {
   const [error, setError] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [inputValue, setInputValue] = useState(stopId)
-  const [apiKeyInput, setApiKeyInput] = useState(() => getApiKey())
 
   async function fetchDepartures() {
-    const apiKey = getApiKey()
-    if (!apiKey) {
-      setError('API-avain puuttuu')
-      setLoading(false)
-      return
-    }
-
     try {
       setError(null)
       const res = await fetchWithTimeout(DIGITRANSIT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'digitransit-subscription-key': apiKey
+          'digitransit-subscription-key': API_KEY
         },
         body: JSON.stringify({ query, variables: { stopId, numberOfDepartures: DEPARTURES_COUNT } })
       })
@@ -97,7 +88,6 @@ export default function BusWidget() {
 
   function saveSettings() {
     localStorage.setItem('busStopId', inputValue)
-    localStorage.setItem('digitransitApiKey', apiKeyInput)
     setStopId(inputValue)
     setShowSettings(false)
     setLoading(true)
@@ -110,18 +100,6 @@ export default function BusWidget() {
           <h2>Asetukset</h2>
         </div>
         <div className="bus-settings">
-          <label>
-            Digitransit API-avain
-            <input
-              type="text"
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx"
-            />
-            <span className="hint">
-              Hanki avain: <a href="https://portal-api.digitransit.fi/" target="_blank" rel="noopener">portal-api.digitransit.fi</a>
-            </span>
-          </label>
           <label>
             Pysäkki-ID
             <input
@@ -167,13 +145,7 @@ export default function BusWidget() {
       {error && (
         <div className="bus-error">
           <p>{error}</p>
-          {error === 'API-avain puuttuu' ? (
-            <button className="btn-primary" onClick={() => setShowSettings(true)}>
-              Lisää API-avain
-            </button>
-          ) : (
-            <button className="btn-primary" onClick={fetchDepartures}>Yritä uudelleen</button>
-          )}
+          <button className="btn-primary" onClick={fetchDepartures}>Yritä uudelleen</button>
         </div>
       )}
 
