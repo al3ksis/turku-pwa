@@ -3,7 +3,7 @@ import './NewsWidget.css'
 
 // Turku concept ID: 18-176134
 const YLE_RSS = 'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_UUTISET&concepts=18-176134'
-const RSS_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(YLE_RSS)}`
+const RSS_URL = `https://corsproxy.io/?${encodeURIComponent(YLE_RSS)}`
 
 function parseRSS(xmlText) {
   const parser = new DOMParser()

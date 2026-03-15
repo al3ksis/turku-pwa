@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './TPSWidget.css'
 
 const TPS_ICS = 'https://hc.tps.fi/fi-fi/?action=getContent&type=exportcalendar&format=ics&levelId=64&season=2026'
-const ICS_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(TPS_ICS)}`
+const ICS_URL = `https://corsproxy.io/?${encodeURIComponent(TPS_ICS)}`
 
 function parseICS(icsText) {
   const events = []
