@@ -118,8 +118,10 @@ export default function BusWidget() {
 
   function addStop() {
     const trimmed = inputValue.trim()
-    if (!trimmed || stops.includes(trimmed) || stops.length >= MAX_STOPS) return
-    saveStops([...stops, trimmed])
+    if (!trimmed || stops.length >= MAX_STOPS) return
+    const stopId = trimmed.startsWith('FOLI:') ? trimmed : `FOLI:${trimmed}`
+    if (stops.includes(stopId)) return
+    saveStops([...stops, stopId])
     setInputValue('')
   }
 
@@ -163,7 +165,7 @@ export default function BusWidget() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="FOLI:123"
+                placeholder="esim. 1933"
                 onKeyDown={(e) => e.key === 'Enter' && addStop()}
               />
               <button className="btn-primary" onClick={addStop}>
