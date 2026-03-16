@@ -41,6 +41,15 @@ export default function NewsWidget() {
 
   useEffect(() => {
     fetchNews()
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        fetchNews()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   if (loading) {
