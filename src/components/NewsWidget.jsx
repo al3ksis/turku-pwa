@@ -23,15 +23,11 @@ export default function NewsWidget() {
   const [news, setNews] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [refreshing, setRefreshing] = useState(false)
 
-  async function fetchNews(isRefresh = false) {
+  async function fetchNews() {
     try {
       setError(null)
-      if (isRefresh) setRefreshing(true)
-      // Add cache-busting for manual refresh
-      const url = isRefresh ? `${RSS_URL}&_t=${Date.now()}` : RSS_URL
-      const res = await fetchWithTimeout(url)
+      const res = await fetchWithTimeout(RSS_URL)
       if (!res.ok) throw new Error('Uutisten haku epäonnistui')
       const text = await res.text()
       const items = parseRSS(text)
@@ -40,7 +36,6 @@ export default function NewsWidget() {
       setError(err.message)
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }
 
@@ -82,18 +77,8 @@ export default function NewsWidget() {
   return (
     <div className="news-widget card">
       <div className="news-header">
-        <div>
-          <img src="/yle-logo.svg" alt="Yle" className="news-logo" />
-          <h2>Uutiset</h2>
-        </div>
-        <button
-          className={`refresh-btn ${refreshing ? 'spinning' : ''}`}
-          onClick={() => fetchNews(true)}
-          disabled={refreshing}
-          title="Päivitä"
-        >
-          ↻
-        </button>
+        <img src="/yle-logo.svg" alt="Yle" className="news-logo" />
+        <h2>Uutiset</h2>
       </div>
       <div className="news-list">
         {news?.map((item, i) => (
