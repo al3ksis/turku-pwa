@@ -22,7 +22,7 @@ export default async (req) => {
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'text/plain',
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=300'
+        'Cache-Control': 'public, max-age=60'
       }
     })
   } catch (error) {

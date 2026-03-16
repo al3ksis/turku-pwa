@@ -4,13 +4,46 @@
 
 .news-header {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.news-header > div {
+  display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
 }
 
 .news-header h2 {
   font-size: 18px;
+}
+
+.refresh-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  padding: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.refresh-btn:hover {
+  color: var(--text);
+}
+
+.refresh-btn:disabled {
+  cursor: not-allowed;
+}
+
+.refresh-btn.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .news-logo {
