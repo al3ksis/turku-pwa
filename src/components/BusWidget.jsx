@@ -49,7 +49,7 @@ function loadStops() {
     try {
       return JSON.parse(saved)
     } catch {
-      return ['FOLI:598']
+      return []
     }
   }
   // Migrate from old single stop format
@@ -57,7 +57,7 @@ function loadStops() {
   if (oldStop) {
     return [oldStop]
   }
-  return ['FOLI:598']
+  return []
 }
 
 export default function BusWidget() {
@@ -106,6 +106,7 @@ export default function BusWidget() {
   }
 
   useEffect(() => {
+    if (stops.length === 0) return
     fetchAllStops()
     const interval = setInterval(fetchAllStops, REFRESH_INTERVAL_MS)
     return () => clearInterval(interval)
@@ -147,15 +148,13 @@ export default function BusWidget() {
             {stops.map(stopId => (
               <div key={stopId} className="stop-item">
                 <span className="stop-id">{stopsData[stopId]?.data?.name || stopId}</span>
-                {stops.length > 1 && (
-                  <button
-                    className="remove-btn"
-                    onClick={() => removeStop(stopId)}
-                    title="Poista"
-                  >
-                    ✕
-                  </button>
-                )}
+                <button
+                  className="remove-btn"
+                  onClick={() => removeStop(stopId)}
+                  title="Poista"
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>
@@ -193,6 +192,13 @@ export default function BusWidget() {
         </button>
       </div>
 
+      {stops.length === 0 && (
+        <div className="bus-empty">
+          <p>Ei pysäkkejä</p>
+          <p className="bus-empty-hint">Lisää pysäkki painamalla ⚙️</p>
+        </div>
+      )}
+
       {stops.length > 1 && (
         <div className="bus-tabs">
           {stops.map((stopId, i) => (
@@ -207,7 +213,7 @@ export default function BusWidget() {
         </div>
       )}
 
-      {activeData.loading && (
+      {stops.length > 0 && activeData.loading && (
         <div className="bus-loading">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="skeleton-row" />

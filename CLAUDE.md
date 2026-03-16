@@ -17,9 +17,21 @@ Henkilökohtainen PWA-sovellus Turkuun liittyvällä hyödyllisellä tiedolla. M
 
 Sovellus näyttää neljä widgettiä:
 
-1. **Sää** - Open-Meteo API (sää + Air Quality API UV/siitepöly)
-2. **Bussit** - Digitransit Waltti API (GraphQL), vaatii API-avaimen
+1. **Sää** - Open-Meteo API
+   - Nykyinen sää (lämpötila, tuuli, sääkuvaus)
+   - Tuntikohtainen ennuste (klikkaa avataksesi, swipettävä)
+   - UV-indeksi värikoodattuna (matala/kohtalainen/korkea/erittäin korkea)
+   - Siitepöly värikoodattuna (koivu, heinä, leppä)
+
+2. **Bussit** - Digitransit Waltti API (GraphQL)
+   - Tukee useita pysäkkejä (max 3)
+   - Välilehdet pysäkkien välillä
+   - Ei oletuspysäkkiä - käyttäjä lisää itse
+   - Auto-refresh 30s välein
+   - Pysäkki-ID:n voi syöttää ilman "FOLI:" -etuliitettä
+
 3. **HC TPS** - hc.tps.fi ICS-kalenteri (seuraavat ottelut)
+
 4. **Uutiset** - Yle RSS (Turku-alue, concept ID 18-176134)
 
 **CORS-ratkaisut:**
@@ -36,12 +48,14 @@ Sovellus näyttää neljä widgettiä:
 ```
 src/
 ├── components/          # React-widgetit
-│   ├── BusWidget.jsx    # Föli-bussit (Digitransit API)
-│   ├── WeatherWidget.jsx # Sää + UV + siitepöly
+│   ├── BusWidget.jsx    # Föli-bussit (usean pysäkin tuki, välilehdet)
+│   ├── WeatherWidget.jsx # Sää + tuntikohtainen + UV + siitepöly
 │   ├── TPSWidget.jsx    # HC TPS ottelut (ICS)
 │   └── NewsWidget.jsx   # Yle Turku uutiset (RSS)
+├── utils/
+│   └── fetch.js         # fetchWithTimeout helper (10s timeout)
 ├── App.jsx              # Pääkomponentti
-├── index.css            # Global dark theme + CSS variables
+├── index.css            # Global dark theme + yhteiset tyylit
 └── main.jsx             # React entry point
 
 public/
@@ -52,7 +66,11 @@ public/
 
 netlify/
 └── functions/
-    └── proxy.js         # CORS proxy (TPS, Yle)
+    └── proxy.js         # CORS proxy (TPS, Yle), 60s cache
+
+.claude/
+└── skills/
+    └── design-review/   # UX/UI design review skill
 ```
 
 ---
@@ -62,19 +80,22 @@ netlify/
 **Kieli:** Suomi UI:ssa, englanti koodissa (muuttujat, kommentit)
 
 **CSS:**
-- CSS variables (`--bg`, `--card`, `--accent`, jne.)
+- CSS variables (`--bg`, `--card`, `--accent`, `--accent-yellow`, `--accent-orange`, jne.)
 - Mobile-first, max-width 430px
-- Komponenttikohtaiset .css-tiedostot
+- Yhteiset tyylit index.css:ssä (.card, .btn-primary, .skeleton-row, @keyframes shimmer)
+- Komponenttikohtaiset .css-tiedostot vain komponenttikohtaisille tyyleille
 
 **API-integraatiot:**
 - Virhetilat + loading-skeleton jokaisessa widgetissä
 - Retry-nappi virhetilanteissa
+- fetchWithTimeout (10s) kaikissa API-kutsuissa
 - Auto-refresh busseille (30s)
 
 **Widgetit:**
 - Jokainen widget on itsenäinen komponentti
 - Omat CSS-tiedostot (BusWidget.css, jne.)
 - Käyttävät `.card`-luokkaa yhtenäiseen ulkoasuun
+- Nimetyt vakiot magic numbereiden sijaan
 
 ---
 

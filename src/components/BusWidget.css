@@ -97,6 +97,23 @@
   height: 32px;
 }
 
+/* Empty state */
+.bus-empty {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.bus-empty p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.bus-empty-hint {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
 /* Error state */
 .bus-error {
   text-align: center;
