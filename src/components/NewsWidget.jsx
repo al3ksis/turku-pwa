@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
 import './NewsWidget.css'
 
-// Turku concept ID: 18-176134
-const YLE_RSS = 'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_UUTISET&concepts=18-176134'
+// Varsinais-Suomi RSS
+const YLE_RSS = 'https://yle.fi/rss/t/18-198259/fi'
 const RSS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(YLE_RSS)}`
 const MAX_NEWS_SHOWN = 4
 
