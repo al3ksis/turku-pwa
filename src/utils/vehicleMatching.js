@@ -33,17 +33,19 @@ function getDepartureTimestamp(departure) {
  * Tarkistaa onko pysäkki bussin tulevissa pysäkeissä ja palauttaa ennustetun ajan
  */
 function findStopInOnwardCalls(vehicle, stopNumber) {
-  if (!vehicle.onwardcalls || !stopNumber) return null
+  if (!stopNumber) return null
 
-  const stop = vehicle.onwardcalls.find(call => call.stoppointref === stopNumber)
-  if (stop) {
-    // Palauta ennustettu tai ajoitettu saapumisaika
-    return (stop.expectedarrivaltime || stop.aimedarrivaltime) * 1000
-  }
-
-  // Tarkista myös seuraava pysäkki erikseen
+  // Tarkista ensin seuraava pysäkki (kun bussi on lähellä, pysäkki ei ole enää onwardcalls-listassa)
   if (vehicle.next_stoppointref === stopNumber) {
     return (vehicle.next_expectedarrivaltime || vehicle.next_aimedarrivaltime) * 1000
+  }
+
+  // Tarkista onwardcalls-lista
+  if (vehicle.onwardcalls) {
+    const stop = vehicle.onwardcalls.find(call => call.stoppointref === stopNumber)
+    if (stop) {
+      return (stop.expectedarrivaltime || stop.aimedarrivaltime) * 1000
+    }
   }
 
   return null
