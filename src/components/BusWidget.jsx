@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
-import BusMapSheet from './BusMapSheet'
 import './BusWidget.css'
 
 const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
@@ -67,7 +66,6 @@ export default function BusWidget() {
   const [stopsData, setStopsData] = useState({})
   const [showSettings, setShowSettings] = useState(false)
   const [inputValue, setInputValue] = useState('')
-  const [selectedDeparture, setSelectedDeparture] = useState(null)
 
   async function fetchStop(stopId) {
     setStopsData(prev => ({
@@ -241,7 +239,6 @@ export default function BusWidget() {
             {activeData.data.stoptimesWithoutPatterns.map((dep, i) => {
               const depSeconds = dep.realtime ? dep.realtimeDeparture : dep.scheduledDeparture
               const minutes = getMinutesUntil(dep.serviceDay, depSeconds)
-              const isFirst = i === 0
               return (
                 <div key={i} className="departure-row">
                   <span className="line-badge">{dep.trip.route.shortName}</span>
@@ -250,29 +247,12 @@ export default function BusWidget() {
                   <span className={`minutes ${minutes <= SOON_THRESHOLD_MINUTES ? 'soon' : ''}`}>
                     {minutes} min
                   </span>
-                  {isFirst ? (
-                    <button
-                      className="track-btn"
-                      onClick={() => setSelectedDeparture(dep)}
-                      title="Seuraa kartalla"
-                    >
-                      🗺️
-                    </button>
-                  ) : (
-                    <span className="track-btn-placeholder" />
-                  )}
                 </div>
               )
             })}
           </div>
         </>
       )}
-
-      <BusMapSheet
-        departure={selectedDeparture}
-        stopId={activeStopId}
-        onClose={() => setSelectedDeparture(null)}
-      />
     </div>
   )
 }

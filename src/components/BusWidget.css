@@ -46,7 +46,7 @@
 
 .departure-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 12px;
 }
@@ -86,31 +86,6 @@
   color: var(--accent-green);
 }
 
-/* Track button */
-.track-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-  flex-shrink: 0;
-}
-
-.track-btn:hover,
-.track-btn:active {
-  background: var(--border);
-  border-color: var(--accent);
-}
-
-.track-btn-placeholder {
-  width: 36px;
-}
 
 /* Loading skeleton */
 .bus-loading {
