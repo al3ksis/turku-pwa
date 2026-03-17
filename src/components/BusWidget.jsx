@@ -60,12 +60,56 @@ function loadStops() {
   return []
 }
 
+function loadCustomNames() {
+  const saved = localStorage.getItem('busStopNames')
+  if (saved) {
+    try {
+      return JSON.parse(saved)
+    } catch {
+      return {}
+    }
+  }
+  return {}
+}
+
 export default function BusWidget() {
   const [stops, setStops] = useState(loadStops)
   const [activeIndex, setActiveIndex] = useState(0)
   const [stopsData, setStopsData] = useState({})
   const [showSettings, setShowSettings] = useState(false)
   const [inputValue, setInputValue] = useState('')
+  const [customNames, setCustomNames] = useState(loadCustomNames)
+  const [editingStopId, setEditingStopId] = useState(null)
+  const [editNameValue, setEditNameValue] = useState('')
+
+  function getDisplayName(stopId) {
+    return customNames[stopId] || stopsData[stopId]?.data?.name || stopId
+  }
+
+  function saveCustomName(stopId, name) {
+    const trimmed = name.trim()
+    const newNames = { ...customNames }
+    if (trimmed) {
+      newNames[stopId] = trimmed
+    } else {
+      delete newNames[stopId]
+    }
+    localStorage.setItem('busStopNames', JSON.stringify(newNames))
+    setCustomNames(newNames)
+  }
+
+  function startEditing(stopId) {
+    setEditingStopId(stopId)
+    setEditNameValue(customNames[stopId] || '')
+  }
+
+  function finishEditing() {
+    if (editingStopId) {
+      saveCustomName(editingStopId, editNameValue)
+      setEditingStopId(null)
+      setEditNameValue('')
+    }
+  }
 
   async function fetchStop(stopId) {
     setStopsData(prev => ({
@@ -147,7 +191,26 @@ export default function BusWidget() {
           <div className="stops-list">
             {stops.map(stopId => (
               <div key={stopId} className="stop-item">
-                <span className="stop-id">{stopsData[stopId]?.data?.name || stopId}</span>
+                {editingStopId === stopId ? (
+                  <input
+                    type="text"
+                    className="stop-name-input"
+                    value={editNameValue}
+                    onChange={(e) => setEditNameValue(e.target.value)}
+                    onBlur={finishEditing}
+                    onKeyDown={(e) => e.key === 'Enter' && finishEditing()}
+                    placeholder={stopsData[stopId]?.data?.name || stopId}
+                    autoFocus
+                  />
+                ) : (
+                  <button
+                    className="stop-name-btn"
+                    onClick={() => startEditing(stopId)}
+                    title="Nimeä uudelleen"
+                  >
+                    {getDisplayName(stopId)}
+                  </button>
+                )}
                 <button
                   className="remove-btn"
                   onClick={() => removeStop(stopId)}
@@ -207,7 +270,7 @@ export default function BusWidget() {
               className={`bus-tab ${i === activeIndex ? 'active' : ''}`}
               onClick={() => setActiveIndex(i)}
             >
-              {stopsData[stopId]?.data?.name || stopId}
+              {getDisplayName(stopId)}
             </button>
           ))}
         </div>
@@ -233,7 +296,7 @@ export default function BusWidget() {
       {!activeData.loading && !activeData.error && activeData.data && (
         <>
           {stops.length === 1 && (
-            <div className="single-stop-name">{activeData.data.name}</div>
+            <div className="single-stop-name">{getDisplayName(activeStopId)}</div>
           )}
           <div className="departures">
             {activeData.data.stoptimesWithoutPatterns.map((dep, i) => {

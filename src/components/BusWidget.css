@@ -223,11 +223,38 @@
   border-radius: 8px;
 }
 
-.stop-id {
+.stop-name-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text);
   font-size: 14px;
+  font-family: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.stop-name-btn:hover {
+  color: var(--accent);
+}
+
+.stop-name-input {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.stop-name-input:focus {
+  outline: none;
 }
 
 .remove-btn {
