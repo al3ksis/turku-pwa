@@ -140,7 +140,13 @@ export default function BusMapSheet({ departure, stopId, onClose }) {
           <div className="sheet-handle" />
         </div>
 
-        <div className="sheet-header">
+        <div
+          className="sheet-header"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+        >
           <div className="sheet-bus-info">
             <span className="sheet-line-badge">
               {departure.trip?.route?.shortName}
