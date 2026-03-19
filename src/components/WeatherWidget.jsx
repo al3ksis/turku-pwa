@@ -111,6 +111,15 @@ export default function WeatherWidget() {
 
   useEffect(() => {
     fetchData()
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        fetchData()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   if (loading) {
