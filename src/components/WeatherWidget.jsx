@@ -7,7 +7,7 @@ const TURKU_LON = 22.2666
 
 const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&wind_speed_unit=ms&timezone=Europe/Helsinki&forecast_days=1`
 
-const AIR_QUALITY_URL = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=uv_index,birch_pollen,grass_pollen,alder_pollen&timezone=Europe/Helsinki`
+const AIR_QUALITY_URL = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=uv_index&hourly=birch_pollen,grass_pollen,alder_pollen&timezone=Europe/Helsinki&forecast_days=1`
 
 const weatherCodes = {
   0: { icon: '☀️', text: 'Selkeää' },
@@ -47,11 +47,25 @@ function getUvLevel(uv) {
   return { text: 'Erittäin korkea', color: 'var(--error)' }
 }
 
+// CAMS/EAACI thresholds (grains/m³):
+// Birch/Alder: ≥10 = season start (moderate), ≥100 = peak (high)
+// Grass: ≥10 = moderate, ~50 = symptoms for most
+// Show lower values too for sensitive individuals
 function getPollenLevel(value) {
-  if (!value || value < 10) return null
-  if (value < 30) return { text: 'vähän', color: 'var(--accent-yellow)' }
-  if (value < 60) return { text: 'kohtalaisesti', color: 'var(--accent-orange)' }
+  if (!value || value < 0.5) return null
+  if (value < 10) return { text: 'vähän', color: 'var(--accent-yellow)' }
+  if (value < 100) return { text: 'kohtalaisesti', color: 'var(--accent-orange)' }
   return { text: 'runsaasti', color: 'var(--error)' }
+}
+
+function getDailyMaxPollen(hourlyData) {
+  if (!hourlyData) return { birch: 0, grass: 0, alder: 0 }
+
+  const birch = hourlyData.birch_pollen ? Math.max(...hourlyData.birch_pollen) : 0
+  const grass = hourlyData.grass_pollen ? Math.max(...hourlyData.grass_pollen) : 0
+  const alder = hourlyData.alder_pollen ? Math.max(...hourlyData.alder_pollen) : 0
+
+  return { birch, grass, alder }
 }
 
 function getHourlyForecast(hourlyData) {
@@ -151,11 +165,12 @@ export default function WeatherWidget() {
   const uv = airQuality?.current?.uv_index
   const uvLevel = uv != null ? getUvLevel(uv) : null
 
-  // Check pollen levels
+  // Check pollen levels (daily max values for better accuracy)
+  const dailyPollen = getDailyMaxPollen(airQuality?.hourly)
   const pollenData = [
-    { name: 'Koivu', level: getPollenLevel(airQuality?.current?.birch_pollen) },
-    { name: 'Heinä', level: getPollenLevel(airQuality?.current?.grass_pollen) },
-    { name: 'Leppä', level: getPollenLevel(airQuality?.current?.alder_pollen) }
+    { name: 'Koivu', level: getPollenLevel(dailyPollen.birch) },
+    { name: 'Heinä', level: getPollenLevel(dailyPollen.grass) },
+    { name: 'Leppä', level: getPollenLevel(dailyPollen.alder) }
   ].filter(p => p.level !== null)
 
   return (
