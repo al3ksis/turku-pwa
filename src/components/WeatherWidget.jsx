@@ -75,6 +75,126 @@ function formatTime(isoString) {
   })
 }
 
+function getSunProgress(sunrise, sunset) {
+  const now = new Date()
+  const sunriseTime = new Date(sunrise)
+  const sunsetTime = new Date(sunset)
+
+  if (now < sunriseTime) return 0
+  if (now > sunsetTime) return 1
+
+  const totalDaylight = sunsetTime - sunriseTime
+  const elapsed = now - sunriseTime
+  return elapsed / totalDaylight
+}
+
+function getDaylightDuration(sunrise, sunset) {
+  const sunriseTime = new Date(sunrise)
+  const sunsetTime = new Date(sunset)
+  const durationMs = sunsetTime - sunriseTime
+  const hours = Math.floor(durationMs / (1000 * 60 * 60))
+  const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60))
+  return { hours, minutes }
+}
+
+function getTimeUntilSunEvent(sunrise, sunset) {
+  const now = new Date()
+  const sunriseTime = new Date(sunrise)
+  const sunsetTime = new Date(sunset)
+
+  let targetTime, event
+  if (now < sunriseTime) {
+    targetTime = sunriseTime
+    event = 'sunrise'
+  } else if (now < sunsetTime) {
+    targetTime = sunsetTime
+    event = 'sunset'
+  } else {
+    return null // After sunset
+  }
+
+  const diffMs = targetTime - now
+  const hours = Math.floor(diffMs / (1000 * 60 * 60))
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+  return { event, hours, minutes }
+}
+
+function SunArc({ sunrise, sunset }) {
+  const progress = getSunProgress(sunrise, sunset)
+  const sunriseFormatted = formatTime(sunrise)
+  const sunsetFormatted = formatTime(sunset)
+
+  // Arc dimensions
+  const width = 280
+  const height = 100
+  const padding = 30
+  const arcStartX = padding
+  const arcEndX = width - padding
+  const arcY = height - 20
+  const arcPeakY = 20
+
+  // Calculate sun position on the arc (quadratic bezier)
+  const t = progress
+  const controlX = width / 2
+  const controlY = arcPeakY - 20
+
+  const sunX = (1 - t) * (1 - t) * arcStartX + 2 * (1 - t) * t * controlX + t * t * arcEndX
+  const sunY = (1 - t) * (1 - t) * arcY + 2 * (1 - t) * t * controlY + t * t * arcY
+
+  // Create arc path
+  const arcPath = `M ${arcStartX} ${arcY} Q ${controlX} ${controlY} ${arcEndX} ${arcY}`
+
+  // Split point for coloring (approximate)
+  const splitX = sunX
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="sun-arc-svg">
+      {/* Dashed gray line (future/after sunset part) */}
+      <path
+        d={arcPath}
+        fill="none"
+        stroke="var(--text-muted)"
+        strokeWidth="2"
+        strokeDasharray="4 4"
+        opacity="0.5"
+      />
+
+      {/* Solid orange line (past/daylight part) */}
+      {progress > 0 && (
+        <path
+          d={arcPath}
+          fill="none"
+          stroke="var(--accent-orange)"
+          strokeWidth="2"
+          strokeDasharray={`${progress * 250} 1000`}
+        />
+      )}
+
+      {/* Sunrise dot */}
+      <circle cx={arcStartX} cy={arcY} r="4" fill="var(--accent-orange)" />
+      <text x={arcStartX} y={arcY + 14} textAnchor="middle" className="sun-arc-time">
+        {sunriseFormatted}
+      </text>
+
+      {/* Sunset dot */}
+      <circle cx={arcEndX} cy={arcY} r="4" fill="var(--text-muted)" />
+      <text x={arcEndX} y={arcY + 14} textAnchor="middle" className="sun-arc-time">
+        {sunsetFormatted}
+      </text>
+
+      {/* Current sun position */}
+      {progress > 0 && progress < 1 && (
+        <>
+          <text x={sunX} y={sunY - 18} textAnchor="middle" className="sun-arc-now">
+            nyt
+          </text>
+          <circle cx={sunX} cy={sunY} r="10" fill="var(--accent-orange)" />
+        </>
+      )}
+    </svg>
+  )
+}
+
 function getHourlyForecast(hourlyData) {
   if (!hourlyData) return []
 
@@ -202,18 +322,42 @@ export default function WeatherWidget() {
         </div>
       </div>
 
-      {sunrise && sunset && (
-        <div className="sun-times">
-          <span className="sun-item">
-            <span className="sun-icon">☀️</span>
-            <span>{formatTime(sunrise)}</span>
-          </span>
-          <span className="sun-item">
-            <span className="sun-icon">🌙</span>
-            <span>{formatTime(sunset)}</span>
-          </span>
-        </div>
-      )}
+      {sunrise && sunset && (() => {
+        const daylight = getDaylightDuration(sunrise, sunset)
+        const sunEvent = getTimeUntilSunEvent(sunrise, sunset)
+        return (
+          <div className="sun-section">
+            <SunArc sunrise={sunrise} sunset={sunset} />
+
+            <div className="sun-info-row">
+              <div className="sun-info-item">
+                <span className="sun-info-label">aurinko nousee</span>
+                <span className="sun-info-time sunrise">{formatTime(sunrise)}</span>
+              </div>
+              <div className="sun-info-daylight">
+                <span>päivänvaloa</span>
+                <span className="daylight-duration">
+                  {daylight.hours}t {daylight.minutes}min
+                </span>
+              </div>
+              <div className="sun-info-item">
+                <span className="sun-info-label">aurinko laskee</span>
+                <span className="sun-info-time">{formatTime(sunset)}</span>
+              </div>
+            </div>
+
+            {sunEvent && (
+              <div className="sun-status-pill">
+                <span className="sun-status-dot"></span>
+                <span>
+                  {sunEvent.event === 'sunrise' ? 'aurinko nousee' : 'aurinko laskee'}{' '}
+                  {sunEvent.hours}t {sunEvent.minutes}min päästä
+                </span>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {showHourly && hourlyForecast.length > 0 && (
         <div className="hourly-forecast">

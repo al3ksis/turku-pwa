@@ -70,24 +70,105 @@
   font-size: 16px;
 }
 
-/* Sun times */
-.sun-times {
+/* Sun arc section */
+.sun-section {
+  margin-bottom: 16px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.sun-arc-svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0 auto;
+  display: block;
+}
+
+.sun-arc-svg text {
+  font-family: inherit;
+}
+
+.sun-arc-time {
+  fill: var(--text-muted);
+  font-size: 11px;
+}
+
+.sun-arc-now {
+  fill: var(--accent-orange);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Sun info row */
+.sun-info-row {
   display: flex;
   justify-content: space-between;
-  padding: 0 8px;
-  margin-bottom: 16px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 0 4px;
 }
 
-.sun-item {
+.sun-info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.sun-info-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sun-info-time {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sun-info-time.sunrise {
+  color: var(--accent-orange);
+}
+
+.sun-info-daylight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg);
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.sun-info-daylight span:first-child {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.daylight-duration {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Sun status pill */
+.sun-status-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: var(--bg);
+  border-radius: 20px;
+  font-size: 13px;
   color: var(--text-secondary);
-  font-size: 14px;
 }
 
-.sun-icon {
-  font-size: 16px;
+.sun-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-orange);
 }
 
 /* Hourly forecast */
