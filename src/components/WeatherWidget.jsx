@@ -5,7 +5,7 @@ import './WeatherWidget.css'
 const TURKU_LAT = 60.4518
 const TURKU_LON = 22.2666
 
-const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe/Helsinki&forecast_days=1`
+const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe/Helsinki&forecast_days=2`
 
 const AIR_QUALITY_URL = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=uv_index&hourly=birch_pollen,grass_pollen,alder_pollen&timezone=Europe/Helsinki&forecast_days=1`
 
@@ -97,7 +97,7 @@ function getDaylightDuration(sunrise, sunset) {
   return { hours, minutes }
 }
 
-function getTimeUntilSunEvent(sunrise, sunset) {
+function getTimeUntilSunEvent(sunrise, sunset, tomorrowSunrise) {
   const now = new Date()
   const sunriseTime = new Date(sunrise)
   const sunsetTime = new Date(sunset)
@@ -109,8 +109,11 @@ function getTimeUntilSunEvent(sunrise, sunset) {
   } else if (now < sunsetTime) {
     targetTime = sunsetTime
     event = 'sunset'
+  } else if (tomorrowSunrise) {
+    targetTime = new Date(tomorrowSunrise)
+    event = 'sunrise'
   } else {
-    return null // After sunset
+    return null
   }
 
   const diffMs = targetTime - now
@@ -290,6 +293,7 @@ export default function WeatherWidget() {
   const hourlyForecast = getHourlyForecast(weather.hourly)
   const sunrise = weather.daily?.sunrise?.[0]
   const sunset = weather.daily?.sunset?.[0]
+  const tomorrowSunrise = weather.daily?.sunrise?.[1]
 
   const uv = airQuality?.current?.uv_index
   const uvLevel = uv != null ? getUvLevel(uv) : null
@@ -324,7 +328,7 @@ export default function WeatherWidget() {
 
       {sunrise && sunset && (() => {
         const daylight = getDaylightDuration(sunrise, sunset)
-        const sunEvent = getTimeUntilSunEvent(sunrise, sunset)
+        const sunEvent = getTimeUntilSunEvent(sunrise, sunset, tomorrowSunrise)
         return (
           <div className="sun-section">
             <SunArc sunrise={sunrise} sunset={sunset} />
