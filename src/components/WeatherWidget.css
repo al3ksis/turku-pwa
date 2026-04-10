@@ -70,6 +70,26 @@
   font-size: 16px;
 }
 
+/* Sun times */
+.sun-times {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-bottom: 16px;
+}
+
+.sun-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.sun-icon {
+  font-size: 16px;
+}
+
 /* Hourly forecast */
 .hourly-forecast {
   margin-bottom: 16px;

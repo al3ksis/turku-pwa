@@ -5,7 +5,7 @@ import './WeatherWidget.css'
 const TURKU_LAT = 60.4518
 const TURKU_LON = 22.2666
 
-const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&wind_speed_unit=ms&timezone=Europe/Helsinki&forecast_days=1`
+const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe/Helsinki&forecast_days=1`
 
 const AIR_QUALITY_URL = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=uv_index&hourly=birch_pollen,grass_pollen,alder_pollen&timezone=Europe/Helsinki&forecast_days=1`
 
@@ -66,6 +66,13 @@ function getDailyMaxPollen(hourlyData) {
   const alder = hourlyData.alder_pollen ? Math.max(...hourlyData.alder_pollen) : 0
 
   return { birch, grass, alder }
+}
+
+function formatTime(isoString) {
+  return new Date(isoString).toLocaleTimeString('fi-FI', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 function getHourlyForecast(hourlyData) {
@@ -161,6 +168,8 @@ export default function WeatherWidget() {
   const current = weather.current
   const weatherInfo = getWeather(current.weather_code)
   const hourlyForecast = getHourlyForecast(weather.hourly)
+  const sunrise = weather.daily?.sunrise?.[0]
+  const sunset = weather.daily?.sunset?.[0]
 
   const uv = airQuality?.current?.uv_index
   const uvLevel = uv != null ? getUvLevel(uv) : null
@@ -192,6 +201,19 @@ export default function WeatherWidget() {
           <span className={`expand-icon ${showHourly ? 'expanded' : ''}`}>▼</span>
         </div>
       </div>
+
+      {sunrise && sunset && (
+        <div className="sun-times">
+          <span className="sun-item">
+            <span className="sun-icon">☀️</span>
+            <span>{formatTime(sunrise)}</span>
+          </span>
+          <span className="sun-item">
+            <span className="sun-icon">🌙</span>
+            <span>{formatTime(sunset)}</span>
+          </span>
+        </div>
+      )}
 
       {showHourly && hourlyForecast.length > 0 && (
         <div className="hourly-forecast">
