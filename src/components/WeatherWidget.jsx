@@ -202,17 +202,16 @@ function getHourlyForecast(hourlyData) {
   if (!hourlyData) return []
 
   const now = new Date()
-  const currentHour = now.getHours()
+  const today = now.toDateString()
 
   const forecast = []
   for (let i = 0; i < hourlyData.time.length; i++) {
     const time = new Date(hourlyData.time[i])
-    const hour = time.getHours()
 
-    // Only show from current hour to end of day (23:00)
-    if (hour >= currentHour) {
+    // Only show from current time to end of today
+    if (time >= now && time.toDateString() === today) {
       forecast.push({
-        hour,
+        hour: time.getHours(),
         temp: Math.round(hourlyData.temperature_2m[i]),
         weatherCode: hourlyData.weather_code[i],
         precipitation: hourlyData.precipitation_probability[i]
