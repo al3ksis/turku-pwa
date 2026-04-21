@@ -12,10 +12,7 @@ export function TurkuMark() {
 export function PageHeader({ title, subtitle, right }) {
   return (
     <header className="page-header">
-      <div className="page-header-row">
-        <TurkuMark />
-        {right}
-      </div>
+      {right && <div className="page-header-row">{right}</div>}
       <h1 className="page-header-h1">{title}</h1>
       {subtitle && <p className="page-header-subtitle">{subtitle}</p>}
     </header>
