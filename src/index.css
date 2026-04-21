@@ -6,6 +6,7 @@
   --accent-green: #4eff9f;
   --accent-yellow: #ffcc00;
   --accent-orange: #ff9900;
+  --accent-red: #ff4a6a;
   --text: #ffffff;
   --text-secondary: #a0a0b0;
   --text-muted: #6a6a7a;
@@ -34,7 +35,7 @@ body {
   min-height: 100svh;
   padding: 16px;
   padding-top: env(safe-area-inset-top, 16px);
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-bottom: 80px;
 }
 
 h1, h2, h3 {

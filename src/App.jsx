@@ -1,20 +1,30 @@
-import BusWidget from './components/BusWidget'
-import WeatherWidget from './components/WeatherWidget'
-import TPSWidget from './components/TPSWidget'
-import NewsWidget from './components/NewsWidget'
+import { useState } from 'react'
+import BottomNav from './components/BottomNav'
+import PageHome from './components/PageHome'
+import PageBus from './components/PageBus'
+import PageNews from './components/PageNews'
+import PageTPS from './components/PageTPS'
 import './App.css'
 
 export default function App() {
-  return (
-    <main>
-      <header>
-        <h1>Turku</h1>
-      </header>
+  const [activeTab, setActiveTab] = useState(
+    () => localStorage.getItem('turku-app.active-tab') || 'home'
+  )
 
-      <WeatherWidget />
-      <BusWidget />
-      <TPSWidget />
-      <NewsWidget />
-    </main>
+  function handleTabChange(tab) {
+    setActiveTab(tab)
+    localStorage.setItem('turku-app.active-tab', tab)
+  }
+
+  return (
+    <>
+      <main className="app-page">
+        {activeTab === 'home' && <PageHome onNavigate={handleTabChange} />}
+        {activeTab === 'bus' && <PageBus />}
+        {activeTab === 'news' && <PageNews />}
+        {activeTab === 'tps' && <PageTPS />}
+      </main>
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+    </>
   )
 }
