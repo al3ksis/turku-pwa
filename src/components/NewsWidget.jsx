@@ -12,11 +12,24 @@ function parseRSS(xmlText) {
   const xml = parser.parseFromString(xmlText, 'text/xml')
   const items = xml.querySelectorAll('item')
 
-  return Array.from(items).slice(0, MAX_NEWS_SHOWN).map(item => ({
-    title: item.querySelector('title')?.textContent || '',
-    url: item.querySelector('link')?.textContent || '',
-    source: 'Yle'
-  }))
+  return Array.from(items).slice(0, MAX_NEWS_SHOWN).map(item => {
+    const pubDateStr = item.querySelector('pubDate')?.textContent || ''
+    const pubDate = pubDateStr ? new Date(pubDateStr) : null
+    return {
+      title: item.querySelector('title')?.textContent || '',
+      url: item.querySelector('link')?.textContent || '',
+      pubDate,
+    }
+  })
+}
+
+function formatNewsDate(date) {
+  if (!date || isNaN(date)) return 'Yle'
+  const d = date.getDate()
+  const m = date.getMonth() + 1
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  return `${d}.${m}. klo ${hh}:${mm}`
 }
 
 export default function NewsWidget() {
@@ -99,7 +112,7 @@ export default function NewsWidget() {
             className="news-row"
           >
             <span className="news-title">{item.title}</span>
-            <span className="news-source">{item.source}</span>
+            <span className="news-source">{formatNewsDate(item.pubDate)}</span>
           </a>
         ))}
       </div>

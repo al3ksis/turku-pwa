@@ -457,22 +457,19 @@ function buildFeedItems(weather, airQuality, news, tpsGame, busData) {
 
   // News (up to 3)
   if (news) {
-    for (const item of news.slice(0, 3)) {
-      const d = item.pubDate
+    const latest = news[0]
+    if (latest) {
+      const d = latest.pubDate
       const timeStr = d
         ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
         : ''
-      const sortMinutes = d
-        ? d.getHours() * 60 + d.getMinutes()
-        : 9998
-
       items.push({
         kind: 'news',
         time: timeStr,
-        sortTime: sortMinutes,
+        sortTime: 99997,
         i: '📰',
         tag: 'Yle Turku',
-        title: item.title,
+        title: latest.title,
         sub: d ? formatRelativeTime(d) : '',
         go: 'news',
       })
