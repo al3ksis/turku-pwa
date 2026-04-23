@@ -78,6 +78,15 @@ function getDaylightDuration(sunrise, sunset) {
   return { hours, minutes }
 }
 
+function getDaylightRemaining(sunset) {
+  const diffMs = new Date(sunset) - new Date()
+  if (diffMs <= 0) return null
+  return {
+    hours: Math.floor(diffMs / (1000 * 60 * 60)),
+    minutes: Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)),
+  }
+}
+
 function getSunProgress(sunrise, sunset) {
   const now = new Date()
   const sunriseTime = new Date(sunrise)
@@ -778,10 +787,18 @@ export default function PageHome({ onNavigate }) {
                 <div className="sun-value">{formatTimeStr(sunrise)}</div>
               </div>
               <div className="sun-cell sun-cell-center">
-                <div className="sun-label">PÄIVÄNVALOA</div>
-                <div className="sun-value">
-                  {daylight ? `${daylight.hours}t ${daylight.minutes}min` : '—'}
-                </div>
+                {(() => {
+                  const remaining = sunset ? getDaylightRemaining(sunset) : null
+                  return remaining
+                    ? <>
+                        <div className="sun-label">JÄLJELLÄ</div>
+                        <div className="sun-value">{remaining.hours}t {remaining.minutes}min</div>
+                      </>
+                    : <>
+                        <div className="sun-label">PÄIVÄNVALOA</div>
+                        <div className="sun-value">{daylight ? `${daylight.hours}t ${daylight.minutes}min` : '—'}</div>
+                      </>
+                })()}
               </div>
               <div className="sun-cell sun-cell-right">
                 <div className="sun-label">LASKEE</div>
