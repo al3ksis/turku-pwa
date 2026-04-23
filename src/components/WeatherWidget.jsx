@@ -338,9 +338,11 @@ export default function WeatherWidget() {
                 <span className="sun-info-time sunrise">{formatTime(sunrise)}</span>
               </div>
               <div className="sun-info-daylight">
-                <span>päivänvaloa</span>
+                <span>{sunEvent?.event === 'sunset' ? 'valoisaa jäljellä' : 'päivänvaloa'}</span>
                 <span className="daylight-duration">
-                  {daylight.hours}t {daylight.minutes}min
+                  {sunEvent?.event === 'sunset'
+                    ? `${sunEvent.hours}t ${sunEvent.minutes}min`
+                    : `${daylight.hours}t ${daylight.minutes}min`}
                 </span>
               </div>
               <div className="sun-info-item">
