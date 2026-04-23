@@ -6,7 +6,6 @@ const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
 const REFRESH_INTERVAL_MS = 30000
 const DEPARTURES_COUNT = 3
 const SOON_THRESHOLD_MINUTES = 5
-const MAX_STOPS = 3
 
 const API_KEY = import.meta.env.VITE_DIGITRANSIT_API_KEY || ''
 
@@ -162,7 +161,7 @@ export default function BusWidget() {
 
   function addStop() {
     const trimmed = inputValue.trim()
-    if (!trimmed || stops.length >= MAX_STOPS) return
+    if (!trimmed) return
     const stopId = trimmed.startsWith('FOLI:') ? trimmed : `FOLI:${trimmed}`
     if (stops.includes(stopId)) return
     saveStops([...stops, stopId])
@@ -213,8 +212,7 @@ export default function BusWidget() {
               </div>
             ))}
           </div>
-          {stops.length < MAX_STOPS && (
-            <div className="add-stop">
+          <div className="add-stop">
               <input
                 type="text"
                 value={inputValue}
@@ -226,7 +224,6 @@ export default function BusWidget() {
                 Lisää
               </button>
             </div>
-          )}
           <button className="btn-secondary" onClick={() => setShowSettings(false)}>
             Valmis
           </button>
