@@ -75,7 +75,8 @@ function parseFcTpsHtml(html) {
         awayTeam = parts[1]?.split('\n')[0].trim() || ''
         continue
       }
-      if (!venue && (text.includes('Stadion') || text.includes('Areena') || text.includes('Kenttä'))) {
+      const tl = text.toLowerCase()
+      if (!venue && (tl.includes('stadion') || tl.includes('areena') || tl.includes('arena') || tl.includes('kenttä') || tl.includes('puisto') || tl.startsWith('raatti'))) {
         venue = text.split(',')[0].trim()
       }
     }
@@ -89,7 +90,7 @@ function parseFcTpsHtml(html) {
     const competition = rowText.includes('Veikkausliiga') ? 'Veikkausliiga' :
                         rowText.includes('Cup') ? 'Cup' : 'FC TPS'
 
-    games.push({ date: gameDate, opponent, isHome, venue: venue || 'Veritas Stadion', competition })
+    games.push({ date: gameDate, opponent, isHome, venue: venue || (isHome ? 'Veritas Stadion' : ''), competition })
   }
 
   return games.sort((a, b) => a.date - b.date)
@@ -108,8 +109,12 @@ function gameTime(date) {
 }
 
 function daysUntil(date) {
-  const d = Math.floor((date - new Date()) / 86400000)
-  if (d <= 0) return 'tänään'
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const gameDay = new Date(date)
+  gameDay.setHours(0, 0, 0, 0)
+  const d = Math.round((gameDay - today) / 86400000)
+  if (d === 0) return 'tänään'
   if (d === 1) return 'huomenna'
   return `${d} pv päästä`
 }
@@ -192,7 +197,7 @@ function NextGameCard({ game }) {
           <div className="ng-datetime">{shortDate(gameDate)} · {gameTime(gameDate)}</div>
           <div className="ng-venue">{venueStr} · {daysUntil(gameDate)}</div>
         </div>
-        {!isHc && (
+        {!isHc && game.isHome && (
           <a href={FC_TICKETS} target="_blank" rel="noopener noreferrer" className="ticket-btn">
             Liput →
           </a>
