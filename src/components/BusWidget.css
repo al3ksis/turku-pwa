@@ -43,8 +43,9 @@
   margin-bottom: 4px;
 }
 
-.bus-stop-pin {
-  font-size: 14px;
+.bus-stop-logo {
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 

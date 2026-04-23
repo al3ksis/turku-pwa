@@ -256,7 +256,7 @@ export default function BusWidget() {
         return (
           <div key={stopId} className="bus-stop-card card">
             <div className="bus-stop-header">
-              <span className="bus-stop-pin">📍</span>
+              <img src="/foli-logo.svg" alt="" className="bus-stop-logo" />
               <span className="bus-stop-name">{name}</span>
             </div>
 
