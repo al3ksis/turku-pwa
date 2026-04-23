@@ -7,7 +7,7 @@
   background: var(--card);
   border-radius: 16px;
   padding: 14px 16px 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .weather-toggle {
@@ -27,9 +27,16 @@
   margin-bottom: 6px;
 }
 
-.weather-emoji {
-  font-size: 40px;
-  line-height: 1;
+.weather-emoji-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(251, 146, 60, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
 }
 
 .weather-chevron {
@@ -271,87 +278,199 @@
   padding-top: 2px;
 }
 
-/* Timeline feed */
+/* TPS card */
 
-.timeline {
-  position: relative;
-  padding-left: 16px;
-  margin-top: 8px;
-}
-
-.timeline-rule {
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
-  left: 4px;
-  width: 1px;
-  background: var(--border);
-}
-
-.feed-item {
+.tps-card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 12px 16px;
   display: flex;
-  gap: 14px;
-  padding: 12px 0;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.feed-item-time {
-  width: 52px;
+.tps-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.tps-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-green);
   flex-shrink: 0;
+}
+
+.tps-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tps-matchup {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.tps-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tps-weekday {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.tps-time {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+/* Home sections (bus, news) */
+
+.home-section {
+  margin-bottom: 12px;
+}
+
+.home-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+.home-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.home-section-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.home-section-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* LIVE indicator */
+
+.bus-live {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--accent-green);
   letter-spacing: 0.4px;
-  padding-top: 2px;
-  font-variant-numeric: tabular-nums;
 }
 
-.feed-item-dot {
+.bus-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green);
+}
+
+/* Bus list */
+
+.bus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bus-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bus-item-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  margin-left: -20px;
-  margin-top: 6px;
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px var(--bg);
 }
 
-.feed-item-content {
+.bus-item-card {
   flex: 1;
   background: var(--card);
   border-radius: 12px;
   padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  border-left: 3px solid transparent;
+}
+
+.bus-item-body {
   min-width: 0;
 }
 
-.feed-item-content.navigable {
-  cursor: pointer;
-}
-
-.feed-item-content:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--accent);
-  outline: none;
-}
-
-.feed-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.bus-item-tag {
   font-size: 10px;
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
   font-weight: 600;
-  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
 }
 
-.feed-title {
+.bus-item-route {
   font-size: 14px;
-  font-weight: 500;
-  line-height: 1.3;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.feed-sub {
+.bus-item-stop {
   font-size: 12px;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 2px;
+}
+
+.bus-item-mins {
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* News card */
+
+.news-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.news-title {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.news-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
 }

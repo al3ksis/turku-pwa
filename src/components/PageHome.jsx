@@ -70,20 +70,19 @@ function getPollenLevel(value) {
 }
 
 function getDaylightDuration(sunrise, sunset) {
-  const sunriseTime = new Date(sunrise)
-  const sunsetTime = new Date(sunset)
-  const durationMs = sunsetTime - sunriseTime
-  const hours = Math.floor(durationMs / (1000 * 60 * 60))
-  const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60))
-  return { hours, minutes }
+  const durationMs = new Date(sunset) - new Date(sunrise)
+  return {
+    hours: Math.floor(durationMs / 3600000),
+    minutes: Math.floor((durationMs % 3600000) / 60000),
+  }
 }
 
 function getDaylightRemaining(sunset) {
   const diffMs = new Date(sunset) - new Date()
   if (diffMs <= 0) return null
   return {
-    hours: Math.floor(diffMs / (1000 * 60 * 60)),
-    minutes: Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)),
+    hours: Math.floor(diffMs / 3600000),
+    minutes: Math.floor((diffMs % 3600000) / 60000),
   }
 }
 
@@ -91,32 +90,73 @@ function getSunProgress(sunrise, sunset) {
   const now = new Date()
   const sunriseTime = new Date(sunrise)
   const sunsetTime = new Date(sunset)
-
   if (now < sunriseTime) return 0
   if (now > sunsetTime) return 1
-
-  const totalDaylight = sunsetTime - sunriseTime
-  const elapsed = now - sunriseTime
-  return elapsed / totalDaylight
+  return (now - sunriseTime) / (sunsetTime - sunriseTime)
 }
 
 function formatTimeStr(isoString) {
-  return new Date(isoString).toLocaleTimeString('fi-FI', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  return new Date(isoString).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' })
 }
 
-function getTodaySubtitle() {
-  const weekdays = ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La']
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 5) return 'Hyvää yötä'
+  if (h < 10) return 'Hyvää huomenta'
+  if (h < 17) return 'Hyvää päivää'
+  if (h < 22) return 'Hyvää iltaa'
+  return 'Hyvää yötä'
+}
+
+function getDaylightSubtitle(sunrise, sunset, tomorrowSunrise) {
   const now = new Date()
-  const day = weekdays[now.getDay()]
+  const sunriseTime = new Date(sunrise)
+  const sunsetTime = new Date(sunset)
+
+  const fmt = (ms) => {
+    const h = Math.floor(ms / 3600000)
+    const m = Math.floor((ms % 3600000) / 60000)
+    return h > 0 ? `${h} t ${m} min` : `${m} min`
+  }
+
+  if (now < sunriseTime) {
+    return `Aurinko nousee ${fmt(sunriseTime - now)} päästä`
+  } else if (now < sunsetTime) {
+    return `Aurinko laskee ${fmt(sunsetTime - now)} päästä`
+  } else if (tomorrowSunrise) {
+    return `Aurinko nousee ${fmt(new Date(tomorrowSunrise) - now)} päästä`
+  }
+  return null
+}
+
+function getCurrentDatetime() {
+  const weekdays = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la']
+  const now = new Date()
   const d = now.getDate()
   const m = now.getMonth() + 1
-  return `${day} ${d}.${m}. · Turku`
+  const h = String(now.getHours()).padStart(2, '0')
+  const min = String(now.getMinutes()).padStart(2, '0')
+  return { date: `${weekdays[now.getDay()]} ${d}.${m}.`, time: `${h}:${min}` }
 }
 
-// --- SunArc component (V3 construction) ---
+function formatTpsGame(summary) {
+  const parts = summary.split('-')
+  if (parts.length < 2) return { vsText: summary, isHome: true }
+  const home = parts[0].trim()
+  const away = parts.slice(1).join('-').trim()
+  return home === 'TPS'
+    ? { vsText: `vs. ${away}`, isHome: true }
+    : { vsText: `@ ${home}`, isHome: false }
+}
+
+function formatRelativeTime(date) {
+  if (!date) return ''
+  const diffMin = Math.floor((Date.now() - date.getTime()) / 60000)
+  if (diffMin < 60) return `${diffMin} min sitten`
+  return `${Math.floor(diffMin / 60)} t sitten`
+}
+
+// --- Sub-components ---
 
 function SunArc({ sunrise, sunset }) {
   const progress = getSunProgress(sunrise, sunset)
@@ -126,69 +166,25 @@ function SunArc({ sunrise, sunset }) {
   const ay = height - 20
   const cx = width / 2
   const cy = 10
-
-  // Quadratic bezier: start=(pad, ay), control=(cx, cy), end=(width-pad, ay)
   const sx = pad
   const ex = width - pad
-
-  // Sun position on arc
   const t = progress
   const sunX = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cx + t * t * ex
   const sunY = (1 - t) * (1 - t) * ay + 2 * (1 - t) * t * cy + t * t * ay
-
   const arcPath = `M ${sx} ${ay} Q ${cx} ${cy} ${ex} ${ay}`
-
-  // Approximate arc length for stroke-dasharray (slightly longer than chord)
   const arcLen = 320
 
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      style={{ display: 'block' }}
-      aria-hidden="true"
-    >
-      {/* Full dashed arc (future part) */}
-      <path
-        d={arcPath}
-        fill="none"
-        stroke="var(--text-muted)"
-        strokeWidth="2"
-        strokeDasharray="4 4"
-        opacity="0.4"
-      />
-
-      {/* Solid orange arc (elapsed part) */}
+    <svg viewBox={`0 0 ${width} ${height}`} width="100%" style={{ display: 'block' }} aria-hidden="true">
+      <path d={arcPath} fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeDasharray="4 4" opacity="0.4" />
       {progress > 0 && (
-        <path
-          d={arcPath}
-          fill="none"
-          stroke="var(--accent-orange)"
-          strokeWidth="2"
-          strokeDasharray={`${progress * arcLen} ${arcLen}`}
-        />
+        <path d={arcPath} fill="none" stroke="var(--accent-orange)" strokeWidth="2" strokeDasharray={`${progress * arcLen} ${arcLen}`} />
       )}
-
-      {/* Sunrise dot */}
       <circle cx={sx} cy={ay} r="4" fill="var(--accent-orange)" />
-
-      {/* Sunset dot */}
       <circle cx={ex} cy={ay} r="4" fill="var(--text-muted)" opacity="0.6" />
-
-      {/* Current sun position label + circle */}
       {progress > 0 && progress < 1 && (
         <>
-          <text
-            x={sunX}
-            y={sunY - 14}
-            textAnchor="middle"
-            fill="var(--text-muted)"
-            fontSize="10"
-            fontWeight="600"
-            letterSpacing="0.4"
-          >
-            nyt
-          </text>
+          <text x={sunX} y={sunY - 14} textAnchor="middle" fill="var(--text-muted)" fontSize="10" fontWeight="600" letterSpacing="0.4">nyt</text>
           <circle cx={sunX} cy={sunY} r="8" fill="var(--accent-orange)" />
         </>
       )}
@@ -196,29 +192,22 @@ function SunArc({ sunrise, sunset }) {
   )
 }
 
-// --- HourlyStrip component ---
-
 function HourlyStrip({ forecast }) {
   return (
     <div className="hourly-strip">
-      {forecast.map((h) => {
-        const showPrecip = h.precip > 20
-        return (
-          <div key={h.hour} className="hourly-cell">
-            <span className="hourly-hour">{h.hour}:00</span>
-            <span className="hourly-emoji">{getWeather(h.weatherCode).icon}</span>
-            <span className="hourly-temp">{h.temp}°</span>
-            <span className={showPrecip ? 'hourly-precip hourly-precip-rain' : 'hourly-precip hourly-precip-none'}>
-              {h.precip > 0 ? `${h.precip}%` : '—'}
-            </span>
-          </div>
-        )
-      })}
+      {forecast.map((h) => (
+        <div key={h.hour} className="hourly-cell">
+          <span className="hourly-hour">{h.hour}:00</span>
+          <span className="hourly-emoji">{getWeather(h.weatherCode).icon}</span>
+          <span className="hourly-temp">{h.temp}°</span>
+          <span className={h.precip > 20 ? 'hourly-precip hourly-precip-rain' : 'hourly-precip hourly-precip-none'}>
+            {h.precip > 0 ? `${h.precip}%` : '—'}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }
-
-// --- AirQualityPanel component ---
 
 const UV_SEGMENTS = [
   { max: 3,  color: 'var(--accent-green)' },
@@ -235,15 +224,8 @@ function UvMeter({ uv }) {
         const segWidth = seg.max - prevMax
         const fillRatio = Math.min(1, Math.max(0, (uv - prevMax) / segWidth))
         return (
-          <div
-            key={i}
-            className="uv-segment"
-            style={{ flex: segWidth, background: 'var(--border)' }}
-          >
-            <div
-              className="uv-segment-fill"
-              style={{ background: seg.color, transform: `scaleX(${fillRatio})`, transformOrigin: 'left' }}
-            />
+          <div key={i} className="uv-segment" style={{ flex: segWidth, background: 'var(--border)' }}>
+            <div className="uv-segment-fill" style={{ background: seg.color, transform: `scaleX(${fillRatio})`, transformOrigin: 'left' }} />
           </div>
         )
       })}
@@ -253,7 +235,6 @@ function UvMeter({ uv }) {
 
 function AirQualityPanel({ uv, pollen }) {
   const uvLevel = uv != null ? getUvLevel(uv) : null
-
   const pollenRows = [
     { name: 'Koivu', level: getPollenLevel(pollen?.birch) },
     { name: 'Heinä', level: getPollenLevel(pollen?.grass) },
@@ -263,7 +244,6 @@ function AirQualityPanel({ uv, pollen }) {
 
   return (
     <div className="air-quality-grid">
-      {/* UV card */}
       <div className="aq-card">
         <div className="aq-label">UV-indeksi</div>
         {uvLevel ? (
@@ -278,8 +258,6 @@ function AirQualityPanel({ uv, pollen }) {
           <span className="pollen-none">—</span>
         )}
       </div>
-
-      {/* Pollen card */}
       <div className="aq-card">
         <div className="aq-label">Siitepöly</div>
         {anyPollen ? (
@@ -310,11 +288,9 @@ function AirQualityPanel({ uv, pollen }) {
 
 function getHourlyForecast(hourlyData) {
   if (!hourlyData) return []
-
   const now = new Date()
   const today = now.toDateString()
   const forecast = []
-
   for (let i = 0; i < hourlyData.time.length; i++) {
     const time = new Date(hourlyData.time[i])
     if (time >= now && time.toDateString() === today) {
@@ -326,32 +302,27 @@ function getHourlyForecast(hourlyData) {
       })
     }
   }
-
   return forecast
 }
 
 function getDailyMaxPollen(hourlyData) {
   if (!hourlyData) return { birch: 0, grass: 0, alder: 0 }
-
-  const birch = hourlyData.birch_pollen ? Math.max(...hourlyData.birch_pollen) : 0
-  const grass = hourlyData.grass_pollen ? Math.max(...hourlyData.grass_pollen) : 0
-  const alder = hourlyData.alder_pollen ? Math.max(...hourlyData.alder_pollen) : 0
-
-  return { birch, grass, alder }
+  return {
+    birch: hourlyData.birch_pollen ? Math.max(...hourlyData.birch_pollen) : 0,
+    grass: hourlyData.grass_pollen ? Math.max(...hourlyData.grass_pollen) : 0,
+    alder: hourlyData.alder_pollen ? Math.max(...hourlyData.alder_pollen) : 0,
+  }
 }
 
 function parseNewsWithDates(xmlText) {
   const parser = new DOMParser()
   const xml = parser.parseFromString(xmlText, 'text/xml')
-  const items = xml.querySelectorAll('item')
-
-  return Array.from(items).slice(0, 6).map(item => {
+  return Array.from(xml.querySelectorAll('item')).slice(0, 6).map(item => {
     const pubDateStr = item.querySelector('pubDate')?.textContent || ''
-    const pubDate = pubDateStr ? new Date(pubDateStr) : null
     return {
       title: item.querySelector('title')?.textContent || '',
       url: item.querySelector('link')?.textContent || '',
-      pubDate,
+      pubDate: pubDateStr ? new Date(pubDateStr) : null,
     }
   })
 }
@@ -368,20 +339,13 @@ function parseTPSNextGame(icsText) {
       event = {}
     } else if (trimmed === 'END:VEVENT' && event) {
       if (event.start && event.summary && event.start > now) {
-        if (!nextGame || event.start < nextGame.start) {
-          nextGame = event
-        }
+        if (!nextGame || event.start < nextGame.start) nextGame = event
       }
       event = null
     } else if (event) {
       if (trimmed.startsWith('DTSTART:')) {
-        const dateStr = trimmed.slice(8)
-        const year = parseInt(dateStr.slice(0, 4))
-        const month = parseInt(dateStr.slice(4, 6))
-        const day = parseInt(dateStr.slice(6, 8))
-        const hour = parseInt(dateStr.slice(9, 11))
-        const min = parseInt(dateStr.slice(11, 13))
-        event.start = new Date(Date.UTC(year, month - 1, day, hour, min))
+        const s = trimmed.slice(8)
+        event.start = new Date(Date.UTC(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8), +s.slice(9,11), +s.slice(11,13)))
       } else if (trimmed.startsWith('SUMMARY:')) {
         event.summary = trimmed.slice(8)
       } else if (trimmed.startsWith('LOCATION:')) {
@@ -389,194 +353,10 @@ function parseTPSNextGame(icsText) {
       }
     }
   }
-
   return nextGame || null
 }
 
-function formatRelativeTime(date) {
-  if (!date) return ''
-  const diffMs = Date.now() - date.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 60) return `${diffMin} min sitten`
-  const diffH = Math.floor(diffMin / 60)
-  return `${diffH} t sitten`
-}
-
-// --- Feed assembly ---
-
-function buildFeedItems(weather, airQuality, news, tpsGame, busData) {
-  const items = []
-  const now = new Date()
-  const todayStr = now.toDateString()
-
-  // UV alert
-  const uv = airQuality?.current?.uv_index
-  if (uv != null && uv >= 6) {
-    const level = getUvLevel(uv)
-    items.push({
-      kind: 'uv',
-      time: '13:00',
-      sortTime: 780,
-      i: '☀️',
-      tag: 'UV-varoitus',
-      title: `UV-indeksi ${Math.round(uv)} · ${level.text}`,
-      sub: 'Käytä aurinkovoidetta ja päähinettä klo 11–15',
-      accent: level.color,
-    })
-  }
-
-  // Pollen alerts (species with runsaasti, i.e. >= 100)
-  const dailyPollen = getDailyMaxPollen(airQuality?.hourly)
-  const pollenAlerts = [
-    { genitiveSpecies: 'Koivun', value: dailyPollen.birch },
-    { genitiveSpecies: 'Heinän', value: dailyPollen.grass },
-    { genitiveSpecies: 'Lepän',  value: dailyPollen.alder },
-  ].filter(p => p.value >= 100)
-
-  for (const p of pollenAlerts) {
-    items.push({
-      kind: 'pollen',
-      time: '14:00',
-      sortTime: 840,
-      i: '🌾',
-      tag: 'Siitepöly',
-      title: `${p.genitiveSpecies} siitepölyä runsaasti`,
-      sub: 'Oireet pahimmillaan iltapäivällä',
-      accent: 'var(--accent-red)',
-    })
-  }
-
-  // Bus departures (one per saved stop, sorted by soonest)
-  if (busData && busData.length > 0) {
-    const sorted = [...busData].sort((a, b) => a.departure.mins - b.departure.mins)
-    sorted.forEach(({ stopName, departure: dep }) => {
-      items.push({
-        kind: 'bus',
-        time: dep.time,
-        sortTime: dep.sortMinutes,
-        i: '🚌',
-        tag: 'Föli',
-        title: `Linja ${dep.line} → ${dep.dest}`,
-        sub: `${stopName} · ${dep.mins} min`,
-        accent: dep.mins <= 5 ? 'var(--accent-green)' : undefined,
-        go: 'bus',
-      })
-    })
-  }
-
-  // News (up to 3)
-  if (news) {
-    const latest = news[0]
-    if (latest) {
-      const d = latest.pubDate
-      const timeStr = d
-        ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-        : ''
-      items.push({
-        kind: 'news',
-        time: timeStr,
-        sortTime: 99997,
-        i: '📰',
-        tag: 'Yle Turku',
-        title: latest.title,
-        sub: d ? formatRelativeTime(d) : '',
-        go: 'news',
-      })
-    }
-  }
-
-  // TPS next game
-  if (tpsGame) {
-    const gameDate = tpsGame.start
-    const isToday = gameDate.toDateString() === todayStr
-    const hours = String(gameDate.getHours()).padStart(2, '0')
-    const mins = String(gameDate.getMinutes()).padStart(2, '0')
-    const timeHHMM = `${hours}:${mins}`
-
-    let timeDisplay
-    let sortTime
-    if (isToday) {
-      timeDisplay = timeHHMM
-      sortTime = gameDate.getHours() * 60 + gameDate.getMinutes()
-    } else {
-      const weekdays = ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La']
-      const wd = weekdays[gameDate.getDay()]
-      timeDisplay = `${wd} ${timeHHMM}`
-      sortTime = 99999
-    }
-
-    // Parse match label
-    const summary = tpsGame.summary || ''
-    const parts = summary.split('-')
-    let matchLabel = summary
-    if (parts.length >= 2) {
-      const home = parts[0].trim()
-      const away = parts.slice(1).join('-').trim()
-      if (home === 'TPS') {
-        matchLabel = `TPS – ${away}`
-      } else {
-        matchLabel = `${home} – TPS`
-      }
-    }
-
-    items.push({
-      kind: 'tps',
-      time: timeDisplay,
-      sortTime,
-      i: '🏒',
-      tag: 'HC TPS',
-      title: matchLabel,
-      sub: tpsGame.location || 'Veritas Areena',
-      accent: 'var(--accent-yellow)',
-      go: 'tps',
-    })
-  }
-
-  // Sort by sortTime ascending
-  items.sort((a, b) => a.sortTime - b.sortTime)
-
-  return items
-}
-
-// --- FeedItem component ---
-
-function FeedItem({ item, onNavigate }) {
-  const dotColor = item.accent || 'var(--text-muted)'
-  const borderLeft = item.accent ? `3px solid ${item.accent}` : undefined
-
-  function handleActivate() {
-    if (item.go) onNavigate(item.go)
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      handleActivate()
-    }
-  }
-
-  return (
-    <div className="feed-item">
-      <div className="feed-item-time">{item.time}</div>
-      <div className="feed-item-dot" style={{ background: dotColor }} />
-      <div
-        className={`feed-item-content${item.go ? ' navigable' : ''}`}
-        style={{ borderLeft }}
-        role={item.go ? 'button' : undefined}
-        tabIndex={item.go ? 0 : undefined}
-        aria-label={item.go ? item.title : undefined}
-        onClick={item.go ? handleActivate : undefined}
-        onKeyDown={item.go ? handleKeyDown : undefined}
-      >
-        <div className="feed-meta">{item.i} {item.tag}</div>
-        <div className="feed-title">{item.title}</div>
-        {item.sub && <div className="feed-sub">{item.sub}</div>}
-      </div>
-    </div>
-  )
-}
-
-// --- Data fetching ---
+// --- Bus fetching ---
 
 const BUS_QUERY = `
 query GetDepartures($stopId: String!, $numberOfDepartures: Int!) {
@@ -588,11 +368,7 @@ query GetDepartures($stopId: String!, $numberOfDepartures: Int!) {
       realtime
       serviceDay
       headsign
-      trip {
-        route {
-          shortName
-        }
-      }
+      trip { route { shortName } }
     }
   }
 }
@@ -603,47 +379,43 @@ async function fetchBus() {
     const saved = localStorage.getItem('busStops')
     if (!saved) return null
     const stops = JSON.parse(saved)
-    if (!stops || stops.length === 0) return null
+    if (!stops?.length) return null
 
     const apiKey = import.meta.env.VITE_DIGITRANSIT_API_KEY || ''
+    const customNames = JSON.parse(localStorage.getItem('busStopNames') || '{}')
     const now = Date.now()
 
     const results = await Promise.all(stops.map(async stopId => {
       try {
         const res = await fetchWithTimeout(DIGITRANSIT_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'digitransit-subscription-key': apiKey,
-          },
+          headers: { 'Content-Type': 'application/json', 'digitransit-subscription-key': apiKey },
           body: JSON.stringify({ query: BUS_QUERY, variables: { stopId, numberOfDepartures: 5 } }),
         })
         const json = await res.json()
-        if (!json.data?.stop) return null
-
+        if (!json.data?.stop) return []
         const stop = json.data.stop
-        const nextDep = stop.stoptimesWithoutPatterns
+        const stopName = customNames[stopId] || stop.name
+        return stop.stoptimesWithoutPatterns
           .map(dep => {
             const depSeconds = dep.realtime ? dep.realtimeDeparture : dep.scheduledDeparture
-            const departureMs = (dep.serviceDay + depSeconds) * 1000
-            const mins = Math.floor((departureMs - now) / 60000)
-            const depDate = new Date(departureMs)
+            const depMs = (dep.serviceDay + depSeconds) * 1000
+            const mins = Math.floor((depMs - now) / 60000)
+            const depDate = new Date(depMs)
             const time = `${String(depDate.getHours()).padStart(2, '0')}:${String(depDate.getMinutes()).padStart(2, '0')}`
-            return { line: dep.trip.route.shortName, dest: dep.headsign, mins, time, sortMinutes: depDate.getHours() * 60 + depDate.getMinutes() }
+            return { stopName, line: dep.trip.route.shortName, dest: dep.headsign, mins, time, depMs }
           })
-          .find(d => d.mins >= 0)
-
-        if (!nextDep) return null
-        const customNames = JSON.parse(localStorage.getItem('busStopNames') || '{}')
-        const stopName = customNames[stopId] || stop.name
-        return { stopName, departure: nextDep }
+          .filter(d => d.mins >= 0)
       } catch {
-        return null
+        return []
       }
     }))
 
-    const valid = results.filter(Boolean)
-    return valid.length > 0 ? valid : null
+    const departures = results.flat().sort((a, b) => a.depMs - b.depMs).slice(0, 6)
+    if (!departures.length) return null
+
+    const stopNames = stops.map(id => customNames[id] || null).filter(Boolean)
+    return { departures, stopNames }
   } catch {
     return null
   }
@@ -656,7 +428,6 @@ export default function PageHome({ onNavigate }) {
   const [airQuality, setAirQuality] = useState(null)
   const [news, setNews] = useState(null)
   const [tpsGame, setTpsGame] = useState(null)
-  const [busData, setBusData] = useState(null)
   const [weatherExpanded, setWeatherExpanded] = useState(false)
 
   async function doFetchWeather() {
@@ -665,49 +436,29 @@ export default function PageHome({ onNavigate }) {
         fetchWithTimeout(WEATHER_URL),
         fetchWithTimeout(AIR_QUALITY_URL),
       ])
-      if (weatherRes.ok) {
-        setWeather(await weatherRes.json())
-      }
-      if (airRes.ok) {
-        setAirQuality(await airRes.json())
-      }
-    } catch {
-      // silent failure - show what we have
-    }
+      if (weatherRes.ok) setWeather(await weatherRes.json())
+      if (airRes.ok) setAirQuality(await airRes.json())
+    } catch { /* silent */ }
   }
 
   async function doFetchNews() {
     try {
       const res = await fetchWithTimeout(YLE_RSS_URL)
-      if (!res.ok) return
-      const text = await res.text()
-      setNews(parseNewsWithDates(text))
-    } catch {
-      // silent failure
-    }
+      if (res.ok) setNews(parseNewsWithDates(await res.text()))
+    } catch { /* silent */ }
   }
 
   async function doFetchTPS() {
     try {
       const res = await fetchWithTimeout(TPS_ICS_URL)
-      if (!res.ok) return
-      const text = await res.text()
-      setTpsGame(parseTPSNextGame(text))
-    } catch {
-      // silent failure
-    }
-  }
-
-  async function doFetchBus() {
-    const data = await fetchBus()
-    setBusData(data)
+      if (res.ok) setTpsGame(parseTPSNextGame(await res.text()))
+    } catch { /* silent */ }
   }
 
   useEffect(() => {
     doFetchWeather()
     doFetchNews()
     doFetchTPS()
-    doFetchBus()
   }, [])
 
   // Derived weather data
@@ -715,26 +466,23 @@ export default function PageHome({ onNavigate }) {
   const weatherInfo = current ? getWeather(current.weather_code) : null
   const sunrise = weather?.daily?.sunrise?.[0]
   const sunset = weather?.daily?.sunset?.[0]
+  const tomorrowSunrise = weather?.daily?.sunrise?.[1]
   const hourlyForecast = weather ? getHourlyForecast(weather.hourly) : []
   const dailyPollen = getDailyMaxPollen(airQuality?.hourly)
   const uv = airQuality?.current?.uv_index
-
-  // Sun strip state
-  const sunProgress = sunrise && sunset ? getSunProgress(sunrise, sunset) : null
   const daylight = sunrise && sunset ? getDaylightDuration(sunrise, sunset) : null
+  const daylightRemaining = sunset ? getDaylightRemaining(sunset) : null
+  const daylightSubtitle = sunrise && sunset ? getDaylightSubtitle(sunrise, sunset, tomorrowSunrise) : null
 
-  function getSunStripLabel() {
-    if (sunProgress === null) return null
-    if (sunProgress === 0) return 'NOUSI'
-    if (sunProgress >= 1) return 'PÄIVÄNVALOA'
-    return 'LASKEE'
-  }
-
-  const feedItems = buildFeedItems(weather, airQuality, news, tpsGame, busData)
+  const datetime = getCurrentDatetime()
 
   return (
     <div className="page-home">
-      <PageHeader title="Tänään" subtitle={getTodaySubtitle()} />
+      <PageHeader
+        title={getGreeting()}
+        subtitle={daylightSubtitle}
+        datetime={datetime}
+      />
 
       {/* Weather card */}
       <div className="weather-card">
@@ -753,7 +501,7 @@ export default function PageHome({ onNavigate }) {
         >
           {current && weatherInfo ? (
             <div className="weather-current">
-              <span className="weather-emoji" aria-hidden="true">{weatherInfo.icon}</span>
+              <div className="weather-emoji-wrap" aria-hidden="true">{weatherInfo.icon}</div>
               <div style={{ flex: 1 }}>
                 <div className="weather-temp">{Math.round(current.temperature_2m)}°</div>
                 <div className="weather-condition">
@@ -768,7 +516,7 @@ export default function PageHome({ onNavigate }) {
             </div>
           ) : (
             <div className="weather-current">
-              <div className="skeleton-row" style={{ width: 40, height: 40, borderRadius: 8 }} />
+              <div className="skeleton-row" style={{ width: 48, height: 48, borderRadius: '50%' }} />
               <div>
                 <div className="skeleton-row" style={{ width: 60, height: 28, borderRadius: 6 }} />
                 <div className="skeleton-row" style={{ width: 100, height: 16, borderRadius: 4, marginTop: 6 }} />
@@ -777,7 +525,6 @@ export default function PageHome({ onNavigate }) {
           )}
         </div>
 
-        {/* Sun arc + strip */}
         {sunrise && sunset && (
           <>
             <SunArc sunrise={sunrise} sunset={sunset} />
@@ -787,18 +534,10 @@ export default function PageHome({ onNavigate }) {
                 <div className="sun-value">{formatTimeStr(sunrise)}</div>
               </div>
               <div className="sun-cell sun-cell-center">
-                {(() => {
-                  const remaining = sunset ? getDaylightRemaining(sunset) : null
-                  return remaining
-                    ? <>
-                        <div className="sun-label">JÄLJELLÄ</div>
-                        <div className="sun-value">{remaining.hours}t {remaining.minutes}min</div>
-                      </>
-                    : <>
-                        <div className="sun-label">PÄIVÄNVALOA</div>
-                        <div className="sun-value">{daylight ? `${daylight.hours}t ${daylight.minutes}min` : '—'}</div>
-                      </>
-                })()}
+                <div className="sun-label">PÄIVÄN PITUUS</div>
+                <div className="sun-value">
+                  {daylight ? `${daylight.hours}t ${daylight.minutes}min` : '—'}
+                </div>
               </div>
               <div className="sun-cell sun-cell-right">
                 <div className="sun-label">LASKEE</div>
@@ -808,7 +547,6 @@ export default function PageHome({ onNavigate }) {
           </>
         )}
 
-        {/* Expanded section */}
         {weatherExpanded && (
           <div className="weather-expanded">
             {hourlyForecast.length > 0 && (
@@ -817,25 +555,56 @@ export default function PageHome({ onNavigate }) {
                 <HourlyStrip forecast={hourlyForecast} />
               </>
             )}
-
             <div className="air-quality-section">
               <div className="section-label">ILMANLAATU TÄNÄÄN</div>
-              <AirQualityPanel
-                uv={uv}
-                pollen={dailyPollen}
-              />
+              <AirQualityPanel uv={uv} pollen={dailyPollen} />
             </div>
           </div>
         )}
       </div>
 
-      {/* Timeline feed */}
-      <div className="timeline">
-        <div className="timeline-rule" />
-        {feedItems.map((item, idx) => (
-          <FeedItem key={idx} item={item} onNavigate={onNavigate} />
-        ))}
-      </div>
+      {/* TPS card */}
+      {tpsGame && (() => {
+        const { vsText, isHome } = formatTpsGame(tpsGame.summary || '')
+        const gameDate = tpsGame.start
+        const weekdays = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la']
+        const wd = weekdays[gameDate.getDay()]
+        const h = String(gameDate.getHours()).padStart(2, '0')
+        const m = String(gameDate.getMinutes()).padStart(2, '0')
+        const isToday = gameDate.toDateString() === new Date().toDateString()
+        return (
+          <div className="tps-card">
+            <div className="tps-left">
+              <div className="tps-meta-row">
+                <span className="tps-dot" />
+                <span className="tps-meta">TPS · {isHome ? 'KOTIOTTELLU' : 'VIERASOTTELU'}</span>
+              </div>
+              <div className="tps-matchup">{vsText}</div>
+            </div>
+            <div className="tps-right">
+              <div className="tps-weekday">{isToday ? 'tänään' : wd}</div>
+              <div className="tps-time">{h}:{m}</div>
+            </div>
+          </div>
+        )
+      })()}
+
+
+      {/* News section */}
+      {news?.[0] && (
+        <div className="home-section">
+          <div className="home-section-heading">
+            <div className="home-section-title">Päivän uutiset</div>
+            <div className="home-section-meta">Yle Turku</div>
+          </div>
+          <div className="news-card">
+            <div className="news-title">{news[0].title}</div>
+            {news[0].pubDate && (
+              <div className="news-sub">{formatRelativeTime(news[0].pubDate)}</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
