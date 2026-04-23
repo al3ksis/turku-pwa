@@ -625,7 +625,9 @@ async function fetchBus() {
           .find(d => d.mins >= 0)
 
         if (!nextDep) return null
-        return { stopName: stop.name, departure: nextDep }
+        const customNames = JSON.parse(localStorage.getItem('busStopNames') || '{}')
+        const stopName = customNames[stopId] || stop.name
+        return { stopName, departure: nextDep }
       } catch {
         return null
       }

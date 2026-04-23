@@ -1,213 +1,166 @@
 .bus-widget {
-  margin-bottom: 16px;
-}
-
-.bus-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.bus-header > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.bus-header h2 {
-  font-size: 18px;
-}
-
-.bus-logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-}
-
-.settings-btn {
-  background: none;
-  border: none;
-  font-size: 18px;
-  padding: 4px;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.settings-btn:hover {
-  opacity: 1;
-}
-
-.departures {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.departure-row {
+.bus-manage-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.bus-manage-btn {
+  background: var(--card);
+  color: var(--text-muted);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.bus-manage-btn:hover {
+  color: var(--text-secondary);
+}
+
+/* Stop card */
+
+.bus-stop-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.bus-stop-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.bus-stop-pin {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.bus-stop-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Departure rows */
+
+.bus-departures {
+  display: flex;
+  flex-direction: column;
+}
+
+.bus-departure-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: 44px 1fr auto auto;
   align-items: center;
   gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.line-badge {
-  background: var(--accent);
-  color: #000;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 4px 8px;
+.bus-departure-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.bus-line-badge {
+  background: var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 6px;
   border-radius: 6px;
-  min-width: 36px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-.destination {
-  color: var(--text-secondary);
-  font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.time {
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.minutes {
-  font-weight: 600;
-  font-size: 14px;
-  min-width: 50px;
-  text-align: right;
-}
-
-.minutes.soon {
+.bus-line-badge.soon {
+  background: rgba(78, 255, 159, 0.15);
   color: var(--accent-green);
 }
 
-
-/* Loading skeleton */
-.bus-loading {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.bus-widget .skeleton-row {
-  height: 32px;
-}
-
-/* Empty state */
-.bus-empty {
-  text-align: center;
-  padding: 24px 16px;
-}
-
-.bus-empty p {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.bus-empty-hint {
-  color: var(--text-muted);
+.bus-destination {
   font-size: 14px;
-  margin-top: 8px;
-}
-
-/* Error state */
-.bus-error {
-  text-align: center;
-  padding: 16px;
-}
-
-.bus-error p {
-  color: var(--error);
-  margin-bottom: 12px;
-}
-
-/* Settings */
-.bus-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.bus-settings label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.bus-settings input {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
   color: var(--text);
-  font-size: 16px;
-  font-family: inherit;
-}
-
-.bus-settings input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-.settings-buttons {
-  display: flex;
-  gap: 12px;
-}
-
-.settings-buttons .btn-primary,
-.settings-buttons .btn-secondary {
-  flex: 1;
-}
-
-/* Tabs */
-.bus-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.bus-tab {
-  flex: 1;
-  background: var(--bg);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.bus-tab.active {
-  background: var(--accent);
-  color: #000;
-  font-weight: 500;
+.bus-dep-time {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.bus-tab:not(.active):hover {
-  background: var(--border);
+.bus-dep-minutes {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text);
+  min-width: 44px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Single stop name */
-.single-stop-name {
-  color: var(--text-secondary);
-  font-size: 14px;
-  margin-bottom: 12px;
+.bus-dep-minutes.soon {
+  color: var(--accent-green);
 }
 
-/* Stops list in settings */
+/* Loading / error */
+
+.bus-stop-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.bus-skeleton-row {
+  height: 20px;
+}
+
+.bus-stop-error {
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Empty state */
+
+.bus-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+}
+
+.bus-empty-hint {
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Settings view */
+
+.bus-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .stops-list {
   display: flex;
   flex-direction: column;
@@ -217,61 +170,41 @@
 .stop-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: var(--bg);
-  padding: 12px;
-  border-radius: 8px;
+  gap: 8px;
 }
 
 .stop-name-btn {
   flex: 1;
-  background: none;
-  border: none;
+  background: var(--bg);
   color: var(--text);
-  font-size: 14px;
-  font-family: inherit;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
   text-align: left;
-  padding: 0;
+  font-size: 14px;
   cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stop-name-btn:hover {
-  color: var(--accent);
 }
 
 .stop-name-input {
   flex: 1;
-  background: var(--card);
-  border: 1px solid var(--accent);
-  border-radius: 4px;
-  padding: 4px 8px;
+  background: var(--bg);
   color: var(--text);
+  border: 1px solid var(--accent);
+  padding: 10px 12px;
+  border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
 }
 
-.stop-name-input:focus {
-  outline: none;
-}
-
 .remove-btn {
-  background: none;
-  border: none;
+  background: transparent;
   color: var(--text-muted);
+  border: none;
+  padding: 8px;
   font-size: 16px;
-  padding: 4px 8px;
   cursor: pointer;
-  transition: color 0.2s;
 }
 
-.remove-btn:hover {
-  color: var(--error);
-}
-
-/* Add stop */
 .add-stop {
   display: flex;
   gap: 8px;
@@ -280,15 +213,10 @@
 .add-stop input {
   flex: 1;
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
   color: var(--text);
-  font-size: 16px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
   font-family: inherit;
-}
-
-.add-stop input:focus {
-  outline: none;
-  border-color: var(--accent);
 }

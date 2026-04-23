@@ -4,7 +4,7 @@ import './BusWidget.css'
 
 const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
 const REFRESH_INTERVAL_MS = 30000
-const DEPARTURES_COUNT = 4
+const DEPARTURES_COUNT = 3
 const SOON_THRESHOLD_MINUTES = 5
 const MAX_STOPS = 3
 
@@ -74,7 +74,6 @@ function loadCustomNames() {
 
 export default function BusWidget() {
   const [stops, setStops] = useState(loadStops)
-  const [activeIndex, setActiveIndex] = useState(0)
   const [stopsData, setStopsData] = useState({})
   const [showSettings, setShowSettings] = useState(false)
   const [inputValue, setInputValue] = useState('')
@@ -171,15 +170,8 @@ export default function BusWidget() {
   }
 
   function removeStop(stopId) {
-    const newStops = stops.filter(s => s !== stopId)
-    saveStops(newStops)
-    if (activeIndex >= newStops.length) {
-      setActiveIndex(Math.max(0, newStops.length - 1))
-    }
+    saveStops(stops.filter(s => s !== stopId))
   }
-
-  const activeStopId = stops[activeIndex]
-  const activeData = stopsData[activeStopId] || { loading: true }
 
   if (showSettings) {
     return (
@@ -244,78 +236,69 @@ export default function BusWidget() {
   }
 
   return (
-    <div className="bus-widget card">
-      <div className="bus-header">
-        <div>
-          <img src="/foli-logo.svg" alt="Föli" className="bus-logo" />
-          <h2>Föli</h2>
-        </div>
-        <button className="settings-btn" onClick={() => setShowSettings(true)} title="Asetukset">
-          ⚙️
+    <div className="bus-widget">
+      <div className="bus-manage-row">
+        <button className="bus-manage-btn" onClick={() => setShowSettings(true)}>
+          ⚙ Pysäkit
         </button>
       </div>
 
       {stops.length === 0 && (
-        <div className="bus-empty">
+        <div className="bus-empty card">
           <p>Ei pysäkkejä</p>
-          <p className="bus-empty-hint">Lisää pysäkki painamalla ⚙️</p>
+          <p className="bus-empty-hint">Lisää pysäkki painamalla Pysäkit</p>
         </div>
       )}
 
-      {stops.length > 1 && (
-        <div className="bus-tabs">
-          {stops.map((stopId, i) => (
-            <button
-              key={stopId}
-              className={`bus-tab ${i === activeIndex ? 'active' : ''}`}
-              onClick={() => setActiveIndex(i)}
-            >
-              {getDisplayName(stopId)}
-            </button>
-          ))}
-        </div>
-      )}
+      {stops.map(stopId => {
+        const data = stopsData[stopId] || { loading: true }
+        const name = getDisplayName(stopId)
+        return (
+          <div key={stopId} className="bus-stop-card card">
+            <div className="bus-stop-header">
+              <span className="bus-stop-pin">📍</span>
+              <span className="bus-stop-name">{name}</span>
+            </div>
 
-      {stops.length > 0 && activeData.loading && (
-        <div className="bus-loading">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="skeleton-row" />
-          ))}
-        </div>
-      )}
+            {data.loading && (
+              <div className="bus-stop-loading">
+                {[1, 2, 3].map(i => <div key={i} className="skeleton-row bus-skeleton-row" />)}
+              </div>
+            )}
 
-      {activeData.error && (
-        <div className="bus-error">
-          <p>{activeData.error}</p>
-          <button className="btn-primary" onClick={() => fetchStop(activeStopId)}>
-            Yritä uudelleen
-          </button>
-        </div>
-      )}
+            {data.error && (
+              <div className="bus-stop-error">
+                <p>{data.error}</p>
+                <button className="btn-primary" onClick={() => fetchStop(stopId)}>
+                  Yritä uudelleen
+                </button>
+              </div>
+            )}
 
-      {!activeData.loading && !activeData.error && activeData.data && (
-        <>
-          {stops.length === 1 && (
-            <div className="single-stop-name">{getDisplayName(activeStopId)}</div>
-          )}
-          <div className="departures">
-            {activeData.data.stoptimesWithoutPatterns.map((dep, i) => {
-              const depSeconds = dep.realtime ? dep.realtimeDeparture : dep.scheduledDeparture
-              const minutes = getMinutesUntil(dep.serviceDay, depSeconds)
-              return (
-                <div key={i} className="departure-row">
-                  <span className="line-badge">{dep.trip.route.shortName}</span>
-                  <span className="destination">{dep.headsign}</span>
-                  <span className="time">{formatTime(dep.serviceDay, depSeconds)}</span>
-                  <span className={`minutes ${minutes <= SOON_THRESHOLD_MINUTES ? 'soon' : ''}`}>
-                    {minutes} min
-                  </span>
-                </div>
-              )
-            })}
+            {!data.loading && !data.error && data.data && (
+              <div className="bus-departures">
+                {data.data.stoptimesWithoutPatterns.map((dep, i) => {
+                  const depSeconds = dep.realtime ? dep.realtimeDeparture : dep.scheduledDeparture
+                  const minutes = getMinutesUntil(dep.serviceDay, depSeconds)
+                  const soon = minutes <= SOON_THRESHOLD_MINUTES
+                  return (
+                    <div key={i} className="bus-departure-row">
+                      <span className={`bus-line-badge ${soon ? 'soon' : ''}`}>
+                        {dep.trip.route.shortName}
+                      </span>
+                      <span className="bus-destination">{dep.headsign}</span>
+                      <span className="bus-dep-time">{formatTime(dep.serviceDay, depSeconds)}</span>
+                      <span className={`bus-dep-minutes ${soon ? 'soon' : ''}`}>
+                        {minutes} min
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        </>
-      )}
+        )
+      })}
     </div>
   )
 }
