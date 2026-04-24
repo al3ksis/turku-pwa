@@ -188,15 +188,35 @@ function NextGameCard({ game }) {
         <span className="ng-meta">{teamLabel} · {competition.toUpperCase()} · <span style={{ color }}>{venueLabel}</span></span>
       </div>
       <div className="next-game-teams">
-        <div className="team-block">
-          <div className="team-badge">TPS</div>
-          <div className="team-city">Turku</div>
-        </div>
-        <div className="ng-dash">—</div>
-        <div className="team-block">
-          <div className="team-badge">{abbr(opponent)}</div>
-          <div className="team-city">{city(opponent)}</div>
-        </div>
+        {game.isHome ? (
+          <>
+            <div className="team-block">
+              <div className="team-badge">TPS</div>
+              <div className="team-name">{teamLabel}</div>
+              <div className="team-city">Turku</div>
+            </div>
+            <div className="ng-dash">—</div>
+            <div className="team-block">
+              <div className="team-badge">{abbr(opponent)}</div>
+              <div className="team-name">{opponent}</div>
+              <div className="team-city">{city(opponent)}</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="team-block">
+              <div className="team-badge">{abbr(opponent)}</div>
+              <div className="team-name">{opponent}</div>
+              <div className="team-city">{city(opponent)}</div>
+            </div>
+            <div className="ng-dash">—</div>
+            <div className="team-block">
+              <div className="team-badge">TPS</div>
+              <div className="team-name">{teamLabel}</div>
+              <div className="team-city">Turku</div>
+            </div>
+          </>
+        )}
       </div>
       <div className="ng-details">
         <div className="ng-info">
