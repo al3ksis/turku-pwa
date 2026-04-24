@@ -5,21 +5,18 @@ import './NewsWidget.css'
 // Varsinais-Suomi RSS
 const YLE_RSS = 'https://yle.fi/rss/t/18-198259/fi'
 const RSS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(YLE_RSS)}`
-const MAX_NEWS_SHOWN = 4
-
 function parseRSS(xmlText) {
   const parser = new DOMParser()
   const xml = parser.parseFromString(xmlText, 'text/xml')
-  const items = xml.querySelectorAll('item')
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - 7)
+  cutoff.setHours(0, 0, 0, 0)
 
-  return Array.from(items).slice(0, MAX_NEWS_SHOWN).map(item => {
+  return Array.from(xml.querySelectorAll('item')).flatMap(item => {
     const pubDateStr = item.querySelector('pubDate')?.textContent || ''
     const pubDate = pubDateStr ? new Date(pubDateStr) : null
-    return {
-      title: item.querySelector('title')?.textContent || '',
-      url: item.querySelector('link')?.textContent || '',
-      pubDate,
-    }
+    if (!pubDate || pubDate < cutoff) return []
+    return [{ title: item.querySelector('title')?.textContent || '', url: item.querySelector('link')?.textContent || '', pubDate }]
   })
 }
 

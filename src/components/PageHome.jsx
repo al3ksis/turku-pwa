@@ -317,7 +317,7 @@ function getDailyMaxPollen(hourlyData) {
 function parseNewsWithDates(xmlText) {
   const parser = new DOMParser()
   const xml = parser.parseFromString(xmlText, 'text/xml')
-  return Array.from(xml.querySelectorAll('item')).slice(0, 6).map(item => {
+  return Array.from(xml.querySelectorAll('item')).map(item => {
     const pubDateStr = item.querySelector('pubDate')?.textContent || ''
     return {
       title: item.querySelector('title')?.textContent || '',
@@ -474,14 +474,11 @@ export default function PageHome({ onNavigate }) {
   const daylightRemaining = sunset ? getDaylightRemaining(sunset) : null
   const daylightSubtitle = sunrise && sunset ? getDaylightSubtitle(sunrise, sunset, tomorrowSunrise) : null
 
-  const datetime = getCurrentDatetime()
-
   return (
     <div className="page-home">
       <PageHeader
         title={getGreeting()}
         subtitle={daylightSubtitle}
-        datetime={datetime}
       />
 
       {/* Weather card */}
@@ -591,20 +588,35 @@ export default function PageHome({ onNavigate }) {
 
 
       {/* News section */}
-      {news?.[0] && (
-        <div className="home-section">
-          <div className="home-section-heading">
-            <div className="home-section-title">Päivän uutiset</div>
-            <div className="home-section-meta">Yle Turku</div>
+      {(() => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const todayNews = (news || []).filter(n => {
+          if (!n.pubDate) return false
+          const d = new Date(n.pubDate)
+          d.setHours(0, 0, 0, 0)
+          return d.getTime() === today.getTime()
+        })
+        if (!todayNews.length) return null
+        return (
+          <div className="home-section">
+            <div className="home-section-heading">
+              <div className="home-section-title">Päivän uutiset</div>
+              <div className="home-section-meta">Yle Turku</div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {todayNews.map((item, i) => (
+                <div key={i} className="news-card">
+                  <div className="news-title">{item.title}</div>
+                  {item.pubDate && (
+                    <div className="news-sub">{formatRelativeTime(item.pubDate)}</div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="news-card">
-            <div className="news-title">{news[0].title}</div>
-            {news[0].pubDate && (
-              <div className="news-sub">{formatRelativeTime(news[0].pubDate)}</div>
-            )}
-          </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
