@@ -37,11 +37,28 @@
   padding-top: 10px;
 }
 
+.page-header-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
 .page-header-h1 {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.3px;
   margin: 0;
+}
+
+.page-header-action button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  padding-top: 6px;
 }
 
 .page-header-subtitle {

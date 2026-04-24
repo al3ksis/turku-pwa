@@ -37,11 +37,9 @@ const Icons = {
   ),
   tps: (filled) => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9"
-        stroke="currentColor" strokeWidth="1.8"
+      <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
         fill={filled ? 'currentColor' : 'none'} />
-      <path d="M8 14.5l3-3 2 2 3-4.5"
-        stroke={filled ? '#000' : 'currentColor'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
 }

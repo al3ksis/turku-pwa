@@ -154,6 +154,14 @@
   margin-top: 4px;
 }
 
+/* No tracked routes */
+
+.bus-no-tracked {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 10px 0;
+}
+
 /* Settings view */
 
 .bus-settings {
@@ -165,45 +173,189 @@
 .stops-list {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+/* Stop card (settings) */
+
+.stop-card {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stop-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 8px;
 }
 
-.stop-item {
+.stop-card-name-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.stop-card-name {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
 }
 
-.stop-name-btn {
-  flex: 1;
-  background: var(--bg);
-  color: var(--text);
-  border: none;
-  padding: 10px 12px;
-  border-radius: 8px;
-  text-align: left;
-  font-size: 14px;
-  cursor: pointer;
+.pencil-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.stop-card-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .stop-name-input {
-  flex: 1;
-  background: var(--bg);
+  width: 100%;
+  background: var(--card);
   color: var(--text);
   border: 1px solid var(--accent);
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .remove-btn {
-  background: transparent;
+  background: var(--card);
   color: var(--text-muted);
   border: none;
-  padding: 8px;
-  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Route chips */
+
+.route-chips-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.route-chips-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.route-chips-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.route-chips-clear {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.route-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.route-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  letter-spacing: 0.2px;
+}
+
+.route-chip.active {
+  background: var(--accent-green);
+  color: #000;
+}
+
+.route-chip.hidden-route {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.chip-check {
+  font-size: 11px;
+}
+
+.route-chip-skeleton {
+  width: 52px;
+  height: 30px;
+  border-radius: 20px;
+}
+
+.route-chips-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Add stop section */
+
+.add-stop-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-stop-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-stop-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.add-stop-map-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
 }
 
 .add-stop {

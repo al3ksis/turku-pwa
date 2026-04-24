@@ -9,7 +9,7 @@ function TurkuAbo() {
   )
 }
 
-export function PageHeader({ title, subtitle, datetime }) {
+export function PageHeader({ title, subtitle, datetime, action }) {
   return (
     <header className="page-header">
       <div className="page-header-top">
@@ -21,7 +21,10 @@ export function PageHeader({ title, subtitle, datetime }) {
           </div>
         )}
       </div>
-      <h1 className="page-header-h1">{title}</h1>
+      <div className="page-header-title-row">
+        <h1 className="page-header-h1">{title}</h1>
+        {action && <div className="page-header-action">{action}</div>}
+      </div>
       {subtitle && <p className="page-header-subtitle">{subtitle}</p>}
     </header>
   )
