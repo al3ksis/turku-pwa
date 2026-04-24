@@ -678,12 +678,12 @@ export default function PageHome({ onNavigate }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {todayNews.map((item, i) => (
-                <div key={i} className="news-card">
+                <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" className="news-card">
                   <div className="news-title">{item.title}</div>
                   {item.pubDate && (
                     <div className="news-sub">{formatRelativeTime(item.pubDate)}</div>
                   )}
-                </div>
+                </a>
               ))}
             </div>
           </div>
