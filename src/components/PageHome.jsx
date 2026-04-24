@@ -18,6 +18,9 @@ const TPS_ICS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(TPS_ICS)
 const YLE_RSS = 'https://yle.fi/rss/t/18-198259/fi'
 const YLE_RSS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(YLE_RSS)}`
 
+const FC_TPS_PAGE = 'https://fc.tps.fi/ottelut/miesten-edustus/'
+const FC_TPS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_TPS_PAGE)}`
+
 const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
 
 // --- Weather codes ---
@@ -157,6 +160,47 @@ function formatRelativeTime(date) {
 }
 
 // --- Sub-components ---
+
+function TpsHomeCard({ game, color, label }) {
+  const WEEKDAYS = ['SU', 'MA', 'TI', 'KE', 'TO', 'PE', 'LA']
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const gameDay = new Date(game.date)
+  gameDay.setHours(0, 0, 0, 0)
+  const diff = Math.round((gameDay - today) / 86400000)
+  const dateLabel = diff === 0 ? 'TÄNÄÄN' : diff === 1 ? 'HUOMENNA'
+    : `${WEEKDAYS[game.date.getDay()]} ${game.date.getDate()}.${game.date.getMonth() + 1}.`
+
+  const msDiff = game.date - new Date()
+  const countdown = diff === 0 && msDiff > 0
+    ? (() => {
+        const h = Math.floor(msDiff / 3600000)
+        const m = Math.floor((msDiff % 3600000) / 60000)
+        return h > 0 ? `alkaa ${h} t ${m} min päästä` : `alkaa ${m} min päästä`
+      })()
+    : null
+
+  const timeStr = `${String(game.date.getHours()).padStart(2, '0')}.${String(game.date.getMinutes()).padStart(2, '0')}`
+
+  return (
+    <div className="tps-home-card">
+      <div className="tps-home-meta-row">
+        <div className="tps-home-meta-left">
+          <span className="tps-home-dot" style={{ background: color }} />
+          <span style={{ color, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label} · {dateLabel}</span>
+        </div>
+        {countdown && <span className="tps-home-countdown">{countdown}</span>}
+      </div>
+      <div className="tps-home-body">
+        <div>
+          <div className="tps-home-matchup">TPS – {game.opponent}</div>
+          <div className="tps-home-venue">{game.venue} · koti</div>
+        </div>
+        <div className="tps-home-time" style={{ color }}>{timeStr}</div>
+      </div>
+    </div>
+  )
+}
 
 function SunArc({ sunrise, sunset }) {
   const progress = getSunProgress(sunrise, sunset)
@@ -327,10 +371,10 @@ function parseNewsWithDates(xmlText) {
   })
 }
 
-function parseTPSNextGame(icsText) {
+function parseHcNextHomeGame(icsText) {
   const lines = icsText.split('\n')
   let event = null
-  let nextGame = null
+  let nextHome = null
   const now = new Date()
 
   for (const line of lines) {
@@ -339,7 +383,8 @@ function parseTPSNextGame(icsText) {
       event = {}
     } else if (trimmed === 'END:VEVENT' && event) {
       if (event.start && event.summary && event.start > now) {
-        if (!nextGame || event.start < nextGame.start) nextGame = event
+        const isHome = event.summary.trim().startsWith('TPS')
+        if (isHome && (!nextHome || event.start < nextHome.start)) nextHome = event
       }
       event = null
     } else if (event) {
@@ -353,7 +398,47 @@ function parseTPSNextGame(icsText) {
       }
     }
   }
-  return nextGame || null
+  if (!nextHome) return null
+  const parts = nextHome.summary.split('-')
+  const opponent = parts.slice(1).join('-').trim()
+  return { date: nextHome.start, opponent, venue: nextHome.location || 'Veritas Areena' }
+}
+
+function parseFcNextHomeGame(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  const now = new Date()
+  const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4})\s+(\d{1,2})\.(\d{2})/
+
+  for (const row of doc.querySelectorAll('tr')) {
+    const cells = Array.from(row.querySelectorAll('td'))
+    if (cells.length < 2) continue
+    let gameDate = null, homeTeam = null, awayTeam = null, venue = null
+
+    for (const cell of cells) {
+      const text = cell.textContent.trim()
+      const dateMatch = text.match(DATE_RE)
+      if (dateMatch) {
+        const [, d, mo, y, h, mi] = dateMatch
+        gameDate = new Date(+y, +mo - 1, +d, +h, +mi)
+        continue
+      }
+      if (text.includes(' vs ')) {
+        const parts = text.split(' vs ')
+        homeTeam = parts[0].trim()
+        awayTeam = parts[1]?.split('\n')[0].trim() || ''
+        continue
+      }
+      const tl = text.toLowerCase()
+      if (!venue && (tl.includes('stadion') || tl.includes('areena') || tl.includes('arena') || tl.includes('kenttä') || tl.includes('puisto') || tl.startsWith('raatti'))) {
+        venue = text.split(',')[0].trim()
+      }
+    }
+
+    if (!gameDate || !homeTeam || gameDate <= now) continue
+    if (!homeTeam.toUpperCase().includes('TPS')) continue
+    return { date: gameDate, opponent: awayTeam, venue: venue || 'Veritas Stadion' }
+  }
+  return null
 }
 
 // --- Bus fetching ---
@@ -427,7 +512,8 @@ export default function PageHome({ onNavigate }) {
   const [weather, setWeather] = useState(null)
   const [airQuality, setAirQuality] = useState(null)
   const [news, setNews] = useState(null)
-  const [tpsGame, setTpsGame] = useState(null)
+  const [hcHomeGame, setHcHomeGame] = useState(null)
+  const [fcHomeGame, setFcHomeGame] = useState(null)
   const [weatherExpanded, setWeatherExpanded] = useState(false)
 
   async function doFetchWeather() {
@@ -450,8 +536,12 @@ export default function PageHome({ onNavigate }) {
 
   async function doFetchTPS() {
     try {
-      const res = await fetchWithTimeout(TPS_ICS_URL)
-      if (res.ok) setTpsGame(parseTPSNextGame(await res.text()))
+      const [hcRes, fcRes] = await Promise.all([
+        fetchWithTimeout(TPS_ICS_URL),
+        fetchWithTimeout(FC_TPS_URL),
+      ])
+      if (hcRes.ok) setHcHomeGame(parseHcNextHomeGame(await hcRes.text()))
+      if (fcRes.ok) setFcHomeGame(parseFcNextHomeGame(await fcRes.text()))
     } catch { /* silent */ }
   }
 
@@ -560,31 +650,13 @@ export default function PageHome({ onNavigate }) {
         )}
       </div>
 
-      {/* TPS card */}
-      {tpsGame && (() => {
-        const { vsText, isHome } = formatTpsGame(tpsGame.summary || '')
-        const gameDate = tpsGame.start
-        const weekdays = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la']
-        const wd = weekdays[gameDate.getDay()]
-        const h = String(gameDate.getHours()).padStart(2, '0')
-        const m = String(gameDate.getMinutes()).padStart(2, '0')
-        const isToday = gameDate.toDateString() === new Date().toDateString()
-        return (
-          <div className="tps-card">
-            <div className="tps-left">
-              <div className="tps-meta-row">
-                <span className="tps-dot" />
-                <span className="tps-meta">TPS · {isHome ? 'KOTIOTTELLU' : 'VIERASOTTELU'}</span>
-              </div>
-              <div className="tps-matchup">{vsText}</div>
-            </div>
-            <div className="tps-right">
-              <div className="tps-weekday">{isToday ? 'tänään' : wd}</div>
-              <div className="tps-time">{h}:{m}</div>
-            </div>
-          </div>
-        )
-      })()}
+      {/* TPS home game cards */}
+      {(fcHomeGame || hcHomeGame) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+          {fcHomeGame && <TpsHomeCard game={fcHomeGame} color="#4ade80" label="FC TPS" />}
+          {hcHomeGame && <TpsHomeCard game={hcHomeGame} color="#4fc3f7" label="HC TPS" />}
+        </div>
+      )}
 
 
       {/* News section */}
