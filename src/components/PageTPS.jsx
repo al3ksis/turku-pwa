@@ -162,6 +162,12 @@ function matchName(opponent, isHome) {
   return isHome ? `TPS – ${opponent}` : `${opponent} – TPS`
 }
 
+function matchColor(isHome, opponent) {
+  const isDerby = opponent && opponent.toLowerCase().includes('inter')
+  if (isDerby) return '#f97316'
+  return isHome ? '#4ade80' : '#60a5fa'
+}
+
 // --- Sub-components ---
 
 function NextGameCard({ game }) {
@@ -174,12 +180,12 @@ function NextGameCard({ game }) {
     ? hcVenueLabel(game.isHome).toUpperCase()
     : fcVenueLabel(game.isHome, opponent).toUpperCase()
   const teamLabel = isHc ? 'HC TPS' : 'FC TPS'
+  const color = matchColor(game.isHome, opponent)
 
   return (
-    <div className="next-game-card">
+    <div className="next-game-card" style={{ borderLeft: `3px solid ${color}`, background: `color-mix(in srgb, ${color} 8%, var(--card))` }}>
       <div className="next-game-header">
-        <span className={`ng-dot ${game.team}`} />
-        <span className="ng-meta">{teamLabel} · {competition.toUpperCase()} · {venueLabel}</span>
+        <span className="ng-meta">{teamLabel} · {competition.toUpperCase()} · <span style={{ color }}>{venueLabel}</span></span>
       </div>
       <div className="next-game-teams">
         <div className="team-block">
@@ -212,20 +218,18 @@ function GameListItem({ game }) {
   const gameDate = isHc ? game.start : game.date
   const venueStr = isHc ? (game.location || 'Veritas Areena') : game.venue
   const label = isHc ? hcVenueLabel(game.isHome) : fcVenueLabel(game.isHome, game.opponent)
+  const color = matchColor(game.isHome, game.opponent)
 
   return (
-    <div className="game-item">
-      <div className={`game-item-dot ${game.team}`} />
-      <div className="game-item-card">
-        <div className="game-item-body">
-          <div className="game-item-tag">{isHc ? 'HC TPS' : 'FC TPS'}</div>
-          <div className="game-item-name">{matchName(game.opponent, game.isHome)}</div>
-          <div className="game-item-venue">{venueStr} · {label}</div>
-        </div>
-        <div className="game-item-time">
-          <div>{shortDate(gameDate)}</div>
-          <div>{gameTime(gameDate)}</div>
-        </div>
+    <div className="game-item-card" style={{ borderLeft: `3px solid ${color}`, background: `color-mix(in srgb, ${color} 6%, var(--card))` }}>
+      <div className="game-item-body">
+        <div className="game-item-tag">{isHc ? 'HC TPS' : 'FC TPS'}</div>
+        <div className="game-item-name">{matchName(game.opponent, game.isHome)}</div>
+        <div className="game-item-venue" style={{ color }}>{venueStr}{venueStr ? ' · ' : ''}{label}</div>
+      </div>
+      <div className="game-item-time">
+        <div>{shortDate(gameDate)}</div>
+        <div>{gameTime(gameDate)}</div>
       </div>
     </div>
   )
