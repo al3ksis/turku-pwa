@@ -194,8 +194,17 @@ export default function BusWidget({ editing = false }) {
   useEffect(() => {
     if (stops.length === 0) return
     fetchAllStops()
-    const interval = setInterval(fetchAllStops, REFRESH_INTERVAL_MS)
-    return () => clearInterval(interval)
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchAllStops()
+    }, REFRESH_INTERVAL_MS)
+    function onVisibility() {
+      if (!document.hidden) fetchAllStops()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [stops])
 
   function saveStops(newStops) {

@@ -567,16 +567,18 @@ function BusHomeSection({ stops, departures, hasAnyStops, onEdit }) {
         {stops.map((stopId, i) => {
           const item = departures[stopId]
           const dep = item?.departure
-          const soon = dep && dep.mins <= BUS_SOON_MINUTES
+          const mins = dep?.depMs != null ? Math.floor((dep.depMs - Date.now()) / 60000) : null
+          const upcoming = mins != null && mins >= 0
+          const soon = upcoming && mins <= BUS_SOON_MINUTES
           return (
             <div key={stopId} className={`bus-home-row ${i > 0 ? 'with-divider' : ''}`}>
               <img src="/foli-logo.svg" alt="" className="bus-home-logo" />
               <span className="bus-home-stop-name">{item?.stopName || stopId.replace('FOLI:', '')}</span>
-              {dep ? (
+              {upcoming ? (
                 <>
                   <span className={`bus-home-line ${soon ? 'soon' : ''}`}>{dep.line}</span>
                   <span className={`bus-home-mins ${soon ? 'soon' : ''}`}>
-                    {dep.mins === 0 ? 'nyt' : `${dep.mins} min`}
+                    {mins === 0 ? 'nyt' : `${mins} min`}
                   </span>
                 </>
               ) : item ? (
@@ -708,9 +710,13 @@ function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose 
   )
 }
 
-// --- TPS cache (stale-while-revalidate via localStorage) ---
+// --- Caches (stale-while-revalidate via localStorage) ---
 
 const TPS_CACHE_KEY = 'tpsHomeGames'
+const WEATHER_CACHE_KEY = 'weatherHomeCache'
+const NEWS_CACHE_KEY = 'newsHomeCache'
+const BUS_CACHE_KEY = 'busDeparturesCache'
+const WEATHER_CACHE_TTL_MS = 30 * 60 * 1000
 
 function readCachedTpsGames() {
   try {
@@ -737,18 +743,71 @@ function writeCachedTpsGames(hc, fc) {
   } catch { /* silent */ }
 }
 
+function readCachedWeather() {
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed.fetchedAt || Date.now() - parsed.fetchedAt > WEATHER_CACHE_TTL_MS) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function writeCachedWeather(weather, airQuality) {
+  try {
+    localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({
+      weather, airQuality, fetchedAt: Date.now()
+    }))
+  } catch { /* silent */ }
+}
+
+function readCachedNews() {
+  try {
+    const raw = localStorage.getItem(NEWS_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed.map(n => ({ ...n, pubDate: n.pubDate ? new Date(n.pubDate) : null }))
+  } catch {
+    return null
+  }
+}
+
+function writeCachedNews(news) {
+  try {
+    localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(news))
+  } catch { /* silent */ }
+}
+
+function readCachedBusDepartures() {
+  try {
+    const raw = localStorage.getItem(BUS_CACHE_KEY)
+    if (!raw) return {}
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
+}
+
+function writeCachedBusDepartures(departures) {
+  try {
+    localStorage.setItem(BUS_CACHE_KEY, JSON.stringify(departures))
+  } catch { /* silent */ }
+}
+
 // --- PageHome component ---
 
 export default function PageHome({ onNavigate }) {
-  const [weather, setWeather] = useState(null)
-  const [airQuality, setAirQuality] = useState(null)
-  const [news, setNews] = useState(null)
+  const [weather, setWeather] = useState(() => readCachedWeather()?.weather ?? null)
+  const [airQuality, setAirQuality] = useState(() => readCachedWeather()?.airQuality ?? null)
+  const [news, setNews] = useState(() => readCachedNews())
   const [hcHomeGame, setHcHomeGame] = useState(() => readCachedTpsGames().hc)
   const [fcHomeGame, setFcHomeGame] = useState(() => readCachedTpsGames().fc)
   const [weatherExpanded, setWeatherExpanded] = useState(false)
   const [busStops, setBusStops] = useState(readBusStops)
   const [busHidden, setBusHidden] = useState(readHomeHidden)
-  const [busDepartures, setBusDepartures] = useState({})
+  const [busDepartures, setBusDepartures] = useState(readCachedBusDepartures)
   const [editingBuses, setEditingBuses] = useState(false)
   const visibleBusStops = busStops.filter(s => !busHidden.includes(s))
 
@@ -765,6 +824,7 @@ export default function PageHome({ onNavigate }) {
     )
     const departures = Object.fromEntries(results)
     setBusDepartures(departures)
+    writeCachedBusDepartures(departures)
 
     const cached = readApiNames()
     let changed = false
@@ -795,15 +855,27 @@ export default function PageHome({ onNavigate }) {
         fetchWithTimeout(WEATHER_URL),
         fetchWithTimeout(AIR_QUALITY_URL),
       ])
-      if (weatherRes.ok) setWeather(await weatherRes.json())
-      if (airRes.ok) setAirQuality(await airRes.json())
+      let nextWeather = null, nextAir = null
+      if (weatherRes.ok) {
+        nextWeather = await weatherRes.json()
+        setWeather(nextWeather)
+      }
+      if (airRes.ok) {
+        nextAir = await airRes.json()
+        setAirQuality(nextAir)
+      }
+      if (nextWeather || nextAir) writeCachedWeather(nextWeather, nextAir)
     } catch { /* silent */ }
   }
 
   async function doFetchNews() {
     try {
       const res = await fetchWithTimeout(YLE_RSS_URL)
-      if (res.ok) setNews(parseNewsWithDates(await res.text()))
+      if (res.ok) {
+        const parsed = parseNewsWithDates(await res.text())
+        setNews(parsed)
+        writeCachedNews(parsed)
+      }
     } catch { /* silent */ }
   }
 
@@ -833,10 +905,19 @@ export default function PageHome({ onNavigate }) {
   }, [])
 
   useEffect(() => {
-    if (editingBuses) return
+    if (editingBuses || !visibleBusStops.length) return
     doFetchBuses()
-    const interval = setInterval(doFetchBuses, BUS_REFRESH_MS)
-    return () => clearInterval(interval)
+    const interval = setInterval(() => {
+      if (!document.hidden) doFetchBuses()
+    }, BUS_REFRESH_MS)
+    function onVisibility() {
+      if (!document.hidden) doFetchBuses()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [busStops, busHidden, editingBuses])
 
   // Derived weather data

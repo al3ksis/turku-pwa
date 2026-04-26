@@ -22,7 +22,8 @@ export default async (req) => {
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'text/plain',
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=60'
+        'Cache-Control': 'public, max-age=60',
+        'Netlify-CDN-Cache-Control': 'public, s-maxage=600, stale-while-revalidate=86400'
       }
     })
   } catch (error) {
