@@ -1,11 +1,18 @@
-const CACHE_NAME = 'turku-v1'
+const CACHE_NAME = 'turku-v2'
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim())
+  event.waitUntil(
+    Promise.all([
+      clients.claim(),
+      caches.keys().then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      ),
+    ])
+  )
 })
 
 self.addEventListener('fetch', (event) => {

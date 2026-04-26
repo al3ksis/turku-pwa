@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    
+  </defs>
+  <rect width="1024" height="1024" fill="#0a0a0f"></rect>
+  
+  <g transform="translate(512 512) scale(0.66) translate(-512 -512)">
+    <text x="512" y="498" text-anchor="middle" font-size="220" class="turku">TURKU</text>
+    <text x="512" y="700" text-anchor="middle" font-size="150" class="abo">ÅBO</text>
+  </g>
+</svg>

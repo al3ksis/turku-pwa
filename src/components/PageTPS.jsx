@@ -117,16 +117,22 @@ function parseFcInterHtml(html) {
 
   for (const li of upcomingList.querySelectorAll('li')) {
     let date = null, venue = null, home = null, away = null
-    for (const p of li.querySelectorAll('p')) {
-      const text = p.textContent.trim()
+    for (const child of li.children) {
+      const text = child.textContent.trim()
+      if (!text) continue
       const m = text.match(DATE_RE)
-      if (m) {
+      if (m && !date) {
         date = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])
-        venue = text.slice(m.index + m[0].length).replace(/^[,\s]+/, '').trim() || null
-      } else if (text.includes(' vs. ')) {
+        continue
+      }
+      if (text.includes(' vs. ')) {
         const [h, a] = text.split(' vs. ').map(s => s.trim())
         home = h; away = a
+        continue
       }
+      const tl = text.toLowerCase()
+      if (tl === 'edustus' || tl === 'lisätiedot') continue
+      if (!venue) venue = text
     }
     if (!date || !home || !away || date <= now) continue
     const isHome = home.toLowerCase().includes('inter')
