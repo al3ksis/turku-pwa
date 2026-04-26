@@ -161,42 +161,54 @@ function formatRelativeTime(date) {
 
 // --- Sub-components ---
 
-function TpsHomeCard({ game, color, label }) {
-  const WEEKDAYS = ['SU', 'MA', 'TI', 'KE', 'TO', 'PE', 'LA']
+const FC_LEAGUE = {
+  label: 'VEIKKAUSLIIGA',
+  borderColor: '#e6007e',
+  badgeBg: 'rgba(212, 160, 23, 0.18)',
+  badgeText: '#d4a017',
+}
+
+const HC_LEAGUE = {
+  label: 'LIIGA',
+  borderColor: '#1e88e5',
+  badgeBg: 'rgba(30, 136, 229, 0.18)',
+  badgeText: '#5dabe5',
+}
+
+const WEEKDAYS_LONG = ['Sunnuntai', 'Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai', 'Lauantai']
+
+function NextMatchCard({ game, league }) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const gameDay = new Date(game.date)
   gameDay.setHours(0, 0, 0, 0)
-  const diff = Math.round((gameDay - today) / 86400000)
-  const dateLabel = diff === 0 ? 'TÄNÄÄN' : diff === 1 ? 'HUOMENNA'
-    : `${WEEKDAYS[game.date.getDay()]} ${game.date.getDate()}.${game.date.getMonth() + 1}.`
+  const daysUntil = Math.round((gameDay - today) / 86400000)
 
-  const msDiff = game.date - new Date()
-  const countdown = diff === 0 && msDiff > 0
-    ? (() => {
-        const h = Math.floor(msDiff / 3600000)
-        const m = Math.floor((msDiff % 3600000) / 60000)
-        return h > 0 ? `alkaa ${h} t ${m} min päästä` : `alkaa ${m} min päästä`
-      })()
-    : null
+  const dateLabel = daysUntil === 0 ? 'Tänään' : daysUntil === 1 ? 'Huomenna'
+    : `${WEEKDAYS_LONG[game.date.getDay()]} ${game.date.getDate()}.${game.date.getMonth() + 1}.`
+
+  const countdown = daysUntil === 0 ? 'tänään' : daysUntil === 1 ? 'huomenna' : `${daysUntil} pv`
 
   const timeStr = `${String(game.date.getHours()).padStart(2, '0')}.${String(game.date.getMinutes()).padStart(2, '0')}`
 
   return (
-    <div className="tps-home-card">
-      <div className="tps-home-meta-row">
-        <div className="tps-home-meta-left">
-          <span className="tps-home-dot" style={{ background: color }} />
-          <span style={{ color, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label} · {dateLabel}</span>
-        </div>
-        {countdown && <span className="tps-home-countdown">{countdown}</span>}
+    <div className="next-match-card" style={{ borderLeftColor: league.borderColor }}>
+      <div className="next-match-meta">
+        <span className="next-match-badge" style={{ background: league.badgeBg, color: league.badgeText }}>
+          {league.label}
+        </span>
+        <span className="next-match-date">{dateLabel}</span>
+        <span className="next-match-countdown">{countdown}</span>
       </div>
-      <div className="tps-home-body">
-        <div>
-          <div className="tps-home-matchup">TPS – {game.opponent}</div>
-          <div className="tps-home-venue">{game.venue} · koti</div>
+      <div className="next-match-body">
+        <div className="next-match-info">
+          <div className="next-match-title">TPS – {game.opponent}</div>
+          <div className="next-match-venue">{game.venue} · Koti</div>
         </div>
-        <div className="tps-home-time" style={{ color }}>{timeStr}</div>
+        <div className="next-match-time">
+          <span className="next-match-time-label">klo</span>
+          <span className="next-match-time-value">{timeStr}</span>
+        </div>
       </div>
     </div>
   )
@@ -944,13 +956,29 @@ export default function PageHome({ onNavigate }) {
         />
       )}
 
-      {/* TPS home game cards */}
-      {(fcHomeGame || hcHomeGame) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-          {fcHomeGame && <TpsHomeCard game={fcHomeGame} color="#4ade80" label="FC TPS" />}
-          {hcHomeGame && <TpsHomeCard game={hcHomeGame} color="#4fc3f7" label="HC TPS" />}
-        </div>
-      )}
+      {/* Next match section */}
+      {(fcHomeGame || hcHomeGame) && (() => {
+        const both = fcHomeGame && hcHomeGame
+        const subtitle = both
+          ? 'FC TPS · HC TPS'
+          : fcHomeGame
+            ? 'FC TPS · Veikkausliiga'
+            : 'HC TPS · Liiga'
+        return (
+          <div className="home-section">
+            <div className="home-section-heading">
+              <div>
+                <div className="home-section-title">{both ? 'Seuraavat ottelut' : 'Seuraava ottelu'}</div>
+                <div className="home-section-sub">{subtitle}</div>
+              </div>
+            </div>
+            <div className="next-match-list">
+              {fcHomeGame && <NextMatchCard game={fcHomeGame} league={FC_LEAGUE} />}
+              {hcHomeGame && <NextMatchCard game={hcHomeGame} league={HC_LEAGUE} />}
+            </div>
+          </div>
+        )
+      })()}
 
 
       {/* News section */}

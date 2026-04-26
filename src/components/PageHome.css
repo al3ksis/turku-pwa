@@ -278,121 +278,89 @@
   padding-top: 2px;
 }
 
-/* TPS home game cards */
+/* Next match cards */
 
-.tps-home-card {
+.next-match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.next-match-card {
   background: var(--card);
   border-radius: 14px;
-  padding: 12px 16px;
+  padding: 14px 16px 16px 14px;
+  border-left: 4px solid transparent;
 }
 
-.tps-home-meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.tps-home-meta-left {
+.next-match-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.tps-home-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.next-match-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 6px;
 }
 
-.tps-home-countdown {
-  font-size: 12px;
+.next-match-date {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.next-match-countdown {
+  font-size: 13px;
   color: var(--text-muted);
+  margin-left: auto;
 }
 
-.tps-home-body {
+.next-match-body {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
 }
 
-.tps-home-matchup {
-  font-size: 20px;
+.next-match-info {
+  min-width: 0;
+}
+
+.next-match-title {
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
 }
 
-.tps-home-venue {
-  font-size: 12px;
+.next-match-venue {
+  font-size: 13px;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
-.tps-home-time {
+.next-match-time {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.next-match-time-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.next-match-time-value {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  flex-shrink: 0;
-}
-
-/* TPS card */
-
-.tps-card {
-  background: var(--card);
-  border-radius: 14px;
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.tps-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.tps-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent-green);
-  flex-shrink: 0;
-}
-
-.tps-meta {
-  font-size: 10px;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.tps-matchup {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-}
-
-.tps-right {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.tps-weekday {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.tps-time {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Home sections (bus, news) */
