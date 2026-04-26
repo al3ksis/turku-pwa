@@ -506,14 +506,43 @@ async function fetchBus() {
   }
 }
 
+// --- TPS cache (stale-while-revalidate via localStorage) ---
+
+const TPS_CACHE_KEY = 'tpsHomeGames'
+
+function readCachedTpsGames() {
+  try {
+    const raw = localStorage.getItem(TPS_CACHE_KEY)
+    if (!raw) return { hc: null, fc: null }
+    const parsed = JSON.parse(raw)
+    const now = Date.now()
+    const revive = (g) => {
+      if (!g) return null
+      const date = new Date(g.date)
+      // Drop cached game if it's already in the past
+      if (isNaN(date) || date.getTime() <= now) return null
+      return { ...g, date }
+    }
+    return { hc: revive(parsed.hc), fc: revive(parsed.fc) }
+  } catch {
+    return { hc: null, fc: null }
+  }
+}
+
+function writeCachedTpsGames(hc, fc) {
+  try {
+    localStorage.setItem(TPS_CACHE_KEY, JSON.stringify({ hc, fc }))
+  } catch { /* silent */ }
+}
+
 // --- PageHome component ---
 
 export default function PageHome({ onNavigate }) {
   const [weather, setWeather] = useState(null)
   const [airQuality, setAirQuality] = useState(null)
   const [news, setNews] = useState(null)
-  const [hcHomeGame, setHcHomeGame] = useState(null)
-  const [fcHomeGame, setFcHomeGame] = useState(null)
+  const [hcHomeGame, setHcHomeGame] = useState(() => readCachedTpsGames().hc)
+  const [fcHomeGame, setFcHomeGame] = useState(() => readCachedTpsGames().fc)
   const [weatherExpanded, setWeatherExpanded] = useState(false)
 
   async function doFetchWeather() {
@@ -540,8 +569,16 @@ export default function PageHome({ onNavigate }) {
         fetchWithTimeout(TPS_ICS_URL),
         fetchWithTimeout(FC_TPS_URL),
       ])
-      if (hcRes.ok) setHcHomeGame(parseHcNextHomeGame(await hcRes.text()))
-      if (fcRes.ok) setFcHomeGame(parseFcNextHomeGame(await fcRes.text()))
+      let hc = null, fc = null
+      if (hcRes.ok) {
+        hc = parseHcNextHomeGame(await hcRes.text())
+        setHcHomeGame(hc)
+      }
+      if (fcRes.ok) {
+        fc = parseFcNextHomeGame(await fcRes.text())
+        setFcHomeGame(fc)
+      }
+      writeCachedTpsGames(hc, fc)
     } catch { /* silent */ }
   }
 
