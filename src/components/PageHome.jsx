@@ -453,9 +453,9 @@ function parseFcInterNextHomeGame(html) {
   const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4}),\s*KLO:\s*(\d{2}):(\d{2})/
 
   let upcomingList = null
-  for (const h3 of doc.querySelectorAll('h3')) {
-    if (h3.textContent.trim().toLowerCase().includes('tulevat')) {
-      let el = h3.nextElementSibling
+  for (const h of doc.querySelectorAll('h1, h2, h3, h4')) {
+    if (h.textContent.trim().toLowerCase().startsWith('tulevat')) {
+      let el = h.nextElementSibling
       while (el && el.tagName !== 'UL') el = el.nextElementSibling
       upcomingList = el
       break
@@ -463,27 +463,38 @@ function parseFcInterNextHomeGame(html) {
   }
   if (!upcomingList) return null
 
-  for (const li of upcomingList.querySelectorAll('li')) {
-    let date = null, venue = null, home = null, away = null
-    for (const child of li.children) {
-      const text = child.textContent.trim()
-      if (!text) continue
-      const m = text.match(DATE_RE)
-      if (m && !date) {
-        date = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])
-        continue
-      }
-      if (text.includes(' vs. ')) {
-        const [h, a] = text.split(' vs. ').map(s => s.trim())
-        home = h; away = a
-        continue
-      }
-      const tl = text.toLowerCase()
-      if (tl === 'edustus' || tl === 'lisätiedot') continue
-      if (!venue) venue = text
+  for (const li of upcomingList.children) {
+    if (li.tagName !== 'LI') continue
+    const dm = li.textContent.match(DATE_RE)
+    if (!dm) continue
+    const date = new Date(+dm[3], +dm[2] - 1, +dm[1], +dm[4], +dm[5])
+    if (date <= now) continue
+
+    let home = null, away = null
+    for (const p of li.querySelectorAll('p')) {
+      const spans = p.querySelectorAll(':scope > span')
+      if (spans.length !== 3) continue
+      const middle = spans[1].textContent.trim().toLowerCase()
+      if (middle !== 'vs.' && middle !== 'vs') continue
+      home = spans[0].textContent.trim()
+      away = spans[2].textContent.trim()
+      if (home && away) break
     }
-    if (!date || !home || !away || date <= now) continue
+    if (!home || !away) continue
     if (!home.toLowerCase().includes('inter')) continue
+
+    let venue = null
+    for (const s of li.querySelectorAll('span')) {
+      if (s.children.length > 0) continue
+      const t = s.textContent.trim()
+      if (!t || t.length > 60) continue
+      if (DATE_RE.test(t)) continue
+      if (/^vs\.?$/i.test(t) || /^edustus$/i.test(t) || /^lisätiedot$/i.test(t)) continue
+      if (t === home || t === away) continue
+      venue = t
+      break
+    }
+
     return { date, opponent: away, venue: venue || 'Veritas Stadion' }
   }
   return null

@@ -98,6 +98,40 @@ function parseFcTpsHtml(html) {
   return games.sort((a, b) => a.date - b.date)
 }
 
+function parseInterMatchLi(li, dateRe) {
+  const fullText = li.textContent
+  const dm = fullText.match(dateRe)
+  if (!dm) return null
+  const date = new Date(+dm[3], +dm[2] - 1, +dm[1], +dm[4], +dm[5])
+
+  let home = null, away = null
+  for (const p of li.querySelectorAll('p')) {
+    const spans = p.querySelectorAll(':scope > span')
+    if (spans.length !== 3) continue
+    const middle = spans[1].textContent.trim().toLowerCase()
+    if (middle !== 'vs.' && middle !== 'vs') continue
+    home = spans[0].textContent.trim()
+    away = spans[2].textContent.trim()
+    if (home && away) break
+  }
+  if (!home || !away) return null
+
+  let venue = null
+  for (const s of li.querySelectorAll('span')) {
+    if (s.children.length > 0) continue
+    const t = s.textContent.trim()
+    if (!t || t.length > 60) continue
+    if (dateRe.test(t)) continue
+    if (/^vs\.?$/i.test(t) || /^edustus$/i.test(t) || /^lisätiedot$/i.test(t)) continue
+    if (t === home || t === away) continue
+    venue = t
+    break
+  }
+
+  const isHome = home.toLowerCase().includes('inter')
+  return { date, opponent: isHome ? away : home, isHome, venue }
+}
+
 function parseFcInterHtml(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html')
   const games = []
@@ -105,9 +139,9 @@ function parseFcInterHtml(html) {
   const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4}),\s*KLO:\s*(\d{2}):(\d{2})/
 
   let upcomingList = null
-  for (const h3 of doc.querySelectorAll('h3')) {
-    if (h3.textContent.trim().toLowerCase().includes('tulevat')) {
-      let el = h3.nextElementSibling
+  for (const h of doc.querySelectorAll('h1, h2, h3, h4')) {
+    if (h.textContent.trim().toLowerCase().startsWith('tulevat')) {
+      let el = h.nextElementSibling
       while (el && el.tagName !== 'UL') el = el.nextElementSibling
       upcomingList = el
       break
@@ -115,29 +149,11 @@ function parseFcInterHtml(html) {
   }
   if (!upcomingList) return []
 
-  for (const li of upcomingList.querySelectorAll('li')) {
-    let date = null, venue = null, home = null, away = null
-    for (const child of li.children) {
-      const text = child.textContent.trim()
-      if (!text) continue
-      const m = text.match(DATE_RE)
-      if (m && !date) {
-        date = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])
-        continue
-      }
-      if (text.includes(' vs. ')) {
-        const [h, a] = text.split(' vs. ').map(s => s.trim())
-        home = h; away = a
-        continue
-      }
-      const tl = text.toLowerCase()
-      if (tl === 'edustus' || tl === 'lisätiedot') continue
-      if (!venue) venue = text
-    }
-    if (!date || !home || !away || date <= now) continue
-    const isHome = home.toLowerCase().includes('inter')
-    const opponent = isHome ? away : home
-    games.push({ date, opponent, isHome, venue })
+  for (const li of upcomingList.children) {
+    if (li.tagName !== 'LI') continue
+    const game = parseInterMatchLi(li, DATE_RE)
+    if (!game || game.date <= now) continue
+    games.push(game)
   }
   return games.sort((a, b) => a.date - b.date)
 }
