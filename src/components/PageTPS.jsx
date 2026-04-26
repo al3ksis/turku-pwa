@@ -69,6 +69,8 @@ function parseFcTpsHtml(html) {
       if (dateMatch) {
         const [, d, mo, y, h, mi] = dateMatch
         gameDate = new Date(+y, +mo - 1, +d, +h, +mi)
+        const after = text.slice(dateMatch.index + dateMatch[0].length).trim()
+        if (after && !venue) venue = after.split(',')[0].trim()
         continue
       }
       if (text.includes(' vs ')) {
@@ -326,18 +328,24 @@ export default function PageTPS() {
   const fcUpcoming = fcGames || []
   const interUpcoming = interGames || []
 
+  const hcArr = hcUpcoming.map(g => ({ ...g, team: 'hc', sortDate: g.start }))
+  const fcArr = fcUpcoming.map(g => ({ ...g, team: 'fc', sortDate: g.date }))
+  const interArr = interUpcoming.map(g => ({ ...g, team: 'inter', sortDate: g.date }))
+
   const visibleGames = (() => {
-    const hc = hcUpcoming.map(g => ({ ...g, team: 'hc', sortDate: g.start }))
-    const fc = fcUpcoming.map(g => ({ ...g, team: 'fc', sortDate: g.date }))
-    const inter = interUpcoming.map(g => ({ ...g, team: 'inter', sortDate: g.date }))
-    if (tab === 'hc') return hc
-    if (tab === 'fc') return fc
-    if (tab === 'inter') return inter
-    return [...hc, ...fc, ...inter].sort((a, b) => a.sortDate - b.sortDate)
+    if (tab === 'hc') return hcArr
+    if (tab === 'fc') return fcArr
+    if (tab === 'inter') return interArr
+    return [...hcArr, ...fcArr, ...interArr].sort((a, b) => a.sortDate - b.sortDate)
   })()
 
-  const nextGame = visibleGames[0] || null
-  const upcomingGames = visibleGames.slice(1)
+  const nextGames = tab === 'all'
+    ? [hcArr[0], fcArr[0], interArr[0]].filter(Boolean).sort((a, b) => a.sortDate - b.sortDate)
+    : visibleGames.slice(0, 1)
+
+  const nextSet = new Set(nextGames)
+  const upcomingGames = visibleGames.filter(g => !nextSet.has(g))
+  const nextLabel = nextGames.length > 1 ? 'SEURAAVAT OTTELUT' : 'SEURAAVA OTTELU'
   const loading = hcLoading || fcLoading || interLoading
   const showSeasonEnded = !hcLoading && hcUpcoming.length === 0 && (tab === 'all' || tab === 'hc')
 
@@ -358,16 +366,18 @@ export default function PageTPS() {
         </button>
       </div>
 
-      {loading && !nextGame ? (
+      {loading && nextGames.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
           {[1, 2, 3].map(i => <div key={i} className="skeleton-row" style={{ height: 60 }} />)}
         </div>
       ) : (
         <>
-          {nextGame && (
+          {nextGames.length > 0 && (
             <>
-              <div className="tps-section-label">SEURAAVA OTTELU</div>
-              <NextGameCard game={nextGame} />
+              <div className="tps-section-label">{nextLabel}</div>
+              <div className="next-match-list">
+                {nextGames.map((g, i) => <NextGameCard key={i} game={g} />)}
+              </div>
             </>
           )}
 
