@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
 import { PageHeader } from './PageHeader'
+import { FeatureMatchCard } from './MatchCard'
 import './PageTPS.css'
 
 const HC_ICS = 'https://hc.tps.fi/fi-fi/?action=getContent&type=exportcalendar&format=ics&levelId=64&season=2026'
 const HC_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(HC_ICS)}`
 const FC_PAGE = 'https://fc.tps.fi/ottelut/miesten-edustus/'
 const FC_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_PAGE)}`
-const FC_TICKETS = 'https://www.lippu.fi/artist/fctps/'
 
 // --- Parsers ---
 
@@ -98,57 +98,6 @@ function parseFcTpsHtml(html) {
 
 // --- Helpers ---
 
-const WEEKDAYS = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la']
-
-function shortDate(date) {
-  return `${WEEKDAYS[date.getDay()]} ${date.getDate()}.${date.getMonth() + 1}.`
-}
-
-function gameTime(date) {
-  return `${String(date.getHours()).padStart(2,'0')}.${String(date.getMinutes()).padStart(2,'0')}`
-}
-
-function daysUntil(date) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const gameDay = new Date(date)
-  gameDay.setHours(0, 0, 0, 0)
-  const d = Math.round((gameDay - today) / 86400000)
-  if (d === 0) return 'tänään'
-  if (d === 1) return 'huomenna'
-  return `${d} pv päästä`
-}
-
-const TEAM_ABBR = {
-  'TPS':'TPS','HJK':'HJK','Inter':'INT','Ilves':'ILV','KuPS':'KuPS',
-  'Gnistan':'GNI','Haka':'HAK','SJK':'SJK','VPS':'VPS','FC Lahti':'FCL',
-  'Mariehamn':'IFK','Tappara':'TAP','Kärpät':'KÄR','HIFK':'HIFK',
-  'JYP':'JYP','HPK':'HPK','Lukko':'LUK','Ässät':'ÄSS','Pelicans':'PEL',
-  'Jukurit':'JUK','Sport':'SPT',
-}
-
-const TEAM_CITY = {
-  'HJK':'Helsinki','Inter':'Turku','Ilves':'Tampere','KuPS':'Kuopio',
-  'SJK':'Seinäjoki','Gnistan':'Helsinki','Haka':'Valkeakoski','VPS':'Vaasa',
-  'Mariehamn':'Maarianhamina','FC Lahti':'Lahti','Tappara':'Tampere',
-  'Kärpät':'Oulu','HIFK':'Helsinki','JYP':'Jyväskylä','HPK':'Hämeenlinna',
-  'Lukko':'Rauma','Ässät':'Pori','Pelicans':'Lahti','Jukurit':'Mikkeli','Sport':'Vaasa',
-}
-
-function abbr(name) {
-  for (const [k, v] of Object.entries(TEAM_ABBR)) {
-    if (name.includes(k)) return v
-  }
-  return name.replace(/^(FC|IF|IFK|AC|FF|FK)\s+/i, '').slice(0, 3).toUpperCase()
-}
-
-function city(name) {
-  for (const [k, v] of Object.entries(TEAM_CITY)) {
-    if (name.includes(k)) return v
-  }
-  return ''
-}
-
 function fcVenueLabel(isHome, opponent) {
   if (opponent.toLowerCase().includes('inter')) return 'paikallispeli'
   return isHome ? 'koti' : 'vieraspeli'
@@ -160,12 +109,6 @@ function hcVenueLabel(isHome) {
 
 function matchName(opponent, isHome) {
   return isHome ? `TPS – ${opponent}` : `${opponent} – TPS`
-}
-
-function matchColor(isHome, opponent) {
-  const isDerby = opponent && opponent.toLowerCase().includes('inter')
-  if (isDerby) return '#ff4a6a'
-  return isHome ? '#4ade80' : '#60a5fa'
 }
 
 function matchColorScheme(game) {
@@ -181,68 +124,37 @@ function leagueLabel(game) {
   return 'VEIKKAUSLIIGA'
 }
 
+function leagueBadgeColors(game) {
+  if (game.team === 'hc') return { bg: 'rgba(30, 136, 229, 0.18)', text: '#5dabe5' }
+  if (game.competition === 'Cup') return { bg: 'rgba(249, 115, 22, 0.18)', text: '#fb923c' }
+  return { bg: 'rgba(212, 160, 23, 0.18)', text: '#d4a017' }
+}
+
+function venueLabelFor(game) {
+  const isHc = game.team === 'hc'
+  const raw = isHc ? hcVenueLabel(game.isHome) : fcVenueLabel(game.isHome, game.opponent)
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
+
 // --- Sub-components ---
 
 function NextGameCard({ game }) {
   const isHc = game.team === 'hc'
   const gameDate = isHc ? game.start : game.date
-  const opponent = game.opponent
-  const venueStr = isHc ? (game.location || 'Veritas Areena') : game.venue
-  const competition = isHc ? 'SM-LIIGA' : (game.competition || 'VEIKKAUSLIIGA')
-  const venueLabel = isHc
-    ? hcVenueLabel(game.isHome).toUpperCase()
-    : fcVenueLabel(game.isHome, opponent).toUpperCase()
-  const teamLabel = isHc ? 'HC TPS' : 'FC TPS'
-  const color = matchColor(game.isHome, opponent)
+  const teamName = isHc ? 'HC TPS' : 'FC TPS'
+  const colors = matchColorScheme(game)
 
   return (
-    <div className="next-game-card" style={{ borderLeft: `3px solid ${color}`, background: `color-mix(in srgb, ${color} 8%, var(--card))` }}>
-      <div className="next-game-header">
-        <span className="ng-meta">{teamLabel} · {competition.toUpperCase()} · <span style={{ color }}>{venueLabel}</span></span>
-      </div>
-      <div className="next-game-teams">
-        {game.isHome ? (
-          <>
-            <div className="team-block">
-              <div className="team-badge">TPS</div>
-              <div className="team-name">{teamLabel}</div>
-              <div className="team-city">Turku</div>
-            </div>
-            <div className="ng-dash">—</div>
-            <div className="team-block">
-              <div className="team-badge">{abbr(opponent)}</div>
-              <div className="team-name">{opponent}</div>
-              <div className="team-city">{city(opponent)}</div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="team-block">
-              <div className="team-badge">{abbr(opponent)}</div>
-              <div className="team-name">{opponent}</div>
-              <div className="team-city">{city(opponent)}</div>
-            </div>
-            <div className="ng-dash">—</div>
-            <div className="team-block">
-              <div className="team-badge">TPS</div>
-              <div className="team-name">{teamLabel}</div>
-              <div className="team-city">Turku</div>
-            </div>
-          </>
-        )}
-      </div>
-      <div className="ng-details">
-        <div className="ng-info">
-          <div className="ng-datetime">{shortDate(gameDate)} · {gameTime(gameDate)}</div>
-          <div className="ng-venue">{venueStr} · {daysUntil(gameDate)}</div>
-        </div>
-        {!isHc && game.isHome && (
-          <a href={FC_TICKETS} target="_blank" rel="noopener noreferrer" className="ticket-btn">
-            Liput →
-          </a>
-        )}
-      </div>
-    </div>
+    <FeatureMatchCard
+      teamName={teamName}
+      opponent={game.opponent}
+      isHome={game.isHome}
+      date={gameDate}
+      leagueLabel={leagueLabel(game)}
+      leagueColors={leagueBadgeColors(game)}
+      borderColor={colors.border}
+      venueLabel={venueLabelFor(game)}
+    />
   )
 }
 

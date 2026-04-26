@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
 import { PageHeader } from './PageHeader'
+import { FeatureMatchCard } from './MatchCard'
 import './PageHome.css'
 
 // --- API URLs ---
@@ -175,42 +176,18 @@ const HC_LEAGUE = {
   badgeText: '#5dabe5',
 }
 
-const WEEKDAYS_LONG = ['Sunnuntai', 'Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai', 'Lauantai']
-
-function NextMatchCard({ game, league }) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const gameDay = new Date(game.date)
-  gameDay.setHours(0, 0, 0, 0)
-  const daysUntil = Math.round((gameDay - today) / 86400000)
-
-  const dateLabel = daysUntil === 0 ? 'Tänään' : daysUntil === 1 ? 'Huomenna'
-    : `${WEEKDAYS_LONG[game.date.getDay()]} ${game.date.getDate()}.${game.date.getMonth() + 1}.`
-
-  const countdown = daysUntil === 0 ? 'tänään' : daysUntil === 1 ? 'huomenna' : `${daysUntil} pv`
-
-  const timeStr = `${String(game.date.getHours()).padStart(2, '0')}.${String(game.date.getMinutes()).padStart(2, '0')}`
-
+function NextHomeMatchCard({ game, league, teamName }) {
   return (
-    <div className="next-match-card" style={{ borderLeftColor: league.borderColor }}>
-      <div className="next-match-meta">
-        <span className="next-match-badge" style={{ background: league.badgeBg, color: league.badgeText }}>
-          {league.label}
-        </span>
-        <span className="next-match-date">{dateLabel}</span>
-        <span className="next-match-countdown">{countdown}</span>
-      </div>
-      <div className="next-match-body">
-        <div className="next-match-info">
-          <div className="next-match-title">TPS – {game.opponent}</div>
-          <div className="next-match-venue">{game.venue} · Koti</div>
-        </div>
-        <div className="next-match-time">
-          <span className="next-match-time-label">klo</span>
-          <span className="next-match-time-value">{timeStr}</span>
-        </div>
-      </div>
-    </div>
+    <FeatureMatchCard
+      teamName={teamName}
+      opponent={game.opponent}
+      isHome={true}
+      date={game.date}
+      leagueLabel={league.label}
+      leagueColors={{ bg: league.badgeBg, text: league.badgeText }}
+      borderColor={league.borderColor}
+      venueLabel="Koti"
+    />
   )
 }
 
@@ -1038,15 +1015,15 @@ export default function PageHome({ onNavigate }) {
         />
       )}
 
-      {/* Next match section */}
+      {/* Next home match section */}
       {(fcHomeGame || hcHomeGame) && (
         <div className="home-section">
           <div className="home-section-heading">
-            <div className="home-section-title">{fcHomeGame && hcHomeGame ? 'Seuraavat ottelut' : 'Seuraava ottelu'}</div>
+            <div className="home-section-title">{fcHomeGame && hcHomeGame ? 'Seuraavat kotiottelut' : 'Seuraava kotiottelu'}</div>
           </div>
           <div className="next-match-list">
-            {fcHomeGame && <NextMatchCard game={fcHomeGame} league={FC_LEAGUE} />}
-            {hcHomeGame && <NextMatchCard game={hcHomeGame} league={HC_LEAGUE} />}
+            {fcHomeGame && <NextHomeMatchCard game={fcHomeGame} league={FC_LEAGUE} teamName="FC TPS" />}
+            {hcHomeGame && <NextHomeMatchCard game={hcHomeGame} league={HC_LEAGUE} teamName="HC TPS" />}
           </div>
         </div>
       )}

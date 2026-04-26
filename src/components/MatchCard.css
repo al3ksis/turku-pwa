@@ -1,0 +1,99 @@
+.feature-match-card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px;
+  border-left: 4px solid transparent;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.feature-match-date {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 64px;
+}
+
+.feature-match-date-weekday {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.feature-match-date-day {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.05;
+  margin: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.feature-match-date-month {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.feature-match-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.feature-match-meta {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.feature-match-league {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.feature-match-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+.feature-match-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.feature-match-clock {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+.feature-match-time {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.feature-match-info-sep {
+  color: var(--text-muted);
+}
+
+.feature-match-venue {
+  color: var(--text-muted);
+}
