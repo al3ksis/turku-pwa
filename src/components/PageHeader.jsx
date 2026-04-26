@@ -21,10 +21,12 @@ export function PageHeader({ title, subtitle, datetime, action }) {
           </div>
         )}
       </div>
-      <div className="page-header-title-row">
-        <h1 className="page-header-h1">{title}</h1>
-        {action && <div className="page-header-action">{action}</div>}
-      </div>
+      {(title || action) && (
+        <div className="page-header-title-row">
+          {title && <h1 className="page-header-h1">{title}</h1>}
+          {action && <div className="page-header-action">{action}</div>}
+        </div>
+      )}
       {subtitle && <p className="page-header-subtitle">{subtitle}</p>}
     </header>
   )

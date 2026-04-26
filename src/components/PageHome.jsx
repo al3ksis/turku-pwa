@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
 import { PageHeader } from './PageHeader'
 import { FeatureMatchCard } from './MatchCard'
+import quotes from '../../quotes.json'
 import './PageHome.css'
 
 // --- API URLs ---
@@ -103,13 +104,16 @@ function formatTimeStr(isoString) {
   return new Date(isoString).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' })
 }
 
-function getGreeting() {
-  const h = new Date().getHours()
-  if (h < 5) return 'Hyvää yötä'
-  if (h < 10) return 'Hyvää huomenta'
-  if (h < 17) return 'Hyvää päivää'
-  if (h < 22) return 'Hyvää iltaa'
-  return 'Hyvää yötä'
+function getDailyQuote() {
+  if (!quotes.length) return ''
+  const dayCount = Math.floor(Date.now() / 86400000)
+  return quotes[dayCount % quotes.length]
+}
+
+const SHORT_WEEKDAYS = ['SU', 'MA', 'TI', 'KE', 'TO', 'PE', 'LA']
+
+function formatShortDate(date = new Date()) {
+  return `${SHORT_WEEKDAYS[date.getDay()]} ${date.getDate()}.${date.getMonth() + 1}.`
 }
 
 function getDaylightSubtitle(sunrise, sunset, tomorrowSunrise) {
@@ -909,12 +913,26 @@ export default function PageHome({ onNavigate }) {
   const daylightRemaining = sunset ? getDaylightRemaining(sunset) : null
   const daylightSubtitle = sunrise && sunset ? getDaylightSubtitle(sunrise, sunset, tomorrowSunrise) : null
 
+  const dailyQuote = getDailyQuote()
+  const todayShort = formatShortDate()
+
   return (
     <div className="page-home">
-      <PageHeader
-        title={getGreeting()}
-        subtitle={daylightSubtitle}
-      />
+      <PageHeader />
+
+      <section className="quote-section" aria-label="Päivän sanonta">
+        <span className="quote-mark" aria-hidden="true">“</span>
+        <p className="quote-text">{dailyQuote}</p>
+        <div className="quote-caption">
+          <span className="quote-caption-date">{todayShort}</span>
+          {daylightSubtitle && (
+            <>
+              <span className="quote-caption-sep"> · </span>
+              <span className="quote-caption-daylight">{daylightSubtitle}</span>
+            </>
+          )}
+        </div>
+      </section>
 
       {/* Weather card */}
       <div className="weather-card">
