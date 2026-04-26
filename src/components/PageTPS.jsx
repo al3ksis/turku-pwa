@@ -164,8 +164,21 @@ function matchName(opponent, isHome) {
 
 function matchColor(isHome, opponent) {
   const isDerby = opponent && opponent.toLowerCase().includes('inter')
-  if (isDerby) return '#f97316'
+  if (isDerby) return '#ff4a6a'
   return isHome ? '#4ade80' : '#60a5fa'
+}
+
+function matchColorScheme(game) {
+  const isDerby = game.opponent && game.opponent.toLowerCase().includes('inter')
+  if (isDerby) return { border: '#ff4a6a', badgeBg: 'rgba(255, 74, 106, 0.18)', badgeText: '#ff8095' }
+  if (game.isHome) return { border: '#4ade80', badgeBg: 'rgba(74, 222, 128, 0.18)', badgeText: '#4ade80' }
+  return { border: '#60a5fa', badgeBg: 'rgba(96, 165, 250, 0.18)', badgeText: '#93c5fd' }
+}
+
+function leagueLabel(game) {
+  if (game.team === 'hc') return 'LIIGA'
+  if (game.competition === 'Cup') return 'CUP'
+  return 'VEIKKAUSLIIGA'
 }
 
 // --- Sub-components ---
@@ -235,13 +248,6 @@ function NextGameCard({ game }) {
 
 const WEEKDAYS_LONG = ['Sunnuntai', 'Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai', 'Lauantai']
 
-function leagueStyle(game) {
-  const isHc = game.team === 'hc'
-  if (isHc) return { label: 'LIIGA', borderColor: '#1e88e5', badgeBg: 'rgba(30, 136, 229, 0.18)', badgeText: '#5dabe5' }
-  if (game.competition === 'Cup') return { label: 'CUP', borderColor: '#f97316', badgeBg: 'rgba(249, 115, 22, 0.18)', badgeText: '#fb923c' }
-  return { label: 'VEIKKAUSLIIGA', borderColor: '#e6007e', badgeBg: 'rgba(212, 160, 23, 0.18)', badgeText: '#d4a017' }
-}
-
 function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
@@ -251,7 +257,7 @@ function GameListItem({ game }) {
   const gameDate = isHc ? game.start : game.date
   const venueStr = isHc ? (game.location || 'Veritas Areena') : game.venue
   const venueLabel = capitalize(isHc ? hcVenueLabel(game.isHome) : fcVenueLabel(game.isHome, game.opponent))
-  const league = leagueStyle(game)
+  const colors = matchColorScheme(game)
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -264,10 +270,10 @@ function GameListItem({ game }) {
   const timeStr = `${String(gameDate.getHours()).padStart(2,'0')}.${String(gameDate.getMinutes()).padStart(2,'0')}`
 
   return (
-    <div className="next-match-card" style={{ borderLeftColor: league.borderColor }}>
+    <div className="next-match-card" style={{ borderLeftColor: colors.border }}>
       <div className="next-match-meta">
-        <span className="next-match-badge" style={{ background: league.badgeBg, color: league.badgeText }}>
-          {league.label}
+        <span className="next-match-badge" style={{ background: colors.badgeBg, color: colors.badgeText }}>
+          {leagueLabel(game)}
         </span>
         <span className="next-match-date">{dateLabel}</span>
         <span className="next-match-countdown">{countdown}</span>
