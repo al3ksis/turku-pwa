@@ -233,23 +233,54 @@ function NextGameCard({ game }) {
   )
 }
 
+const WEEKDAYS_LONG = ['Sunnuntai', 'Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai', 'Lauantai']
+
+function leagueStyle(game) {
+  const isHc = game.team === 'hc'
+  if (isHc) return { label: 'LIIGA', borderColor: '#1e88e5', badgeBg: 'rgba(30, 136, 229, 0.18)', badgeText: '#5dabe5' }
+  if (game.competition === 'Cup') return { label: 'CUP', borderColor: '#f97316', badgeBg: 'rgba(249, 115, 22, 0.18)', badgeText: '#fb923c' }
+  return { label: 'VEIKKAUSLIIGA', borderColor: '#e6007e', badgeBg: 'rgba(212, 160, 23, 0.18)', badgeText: '#d4a017' }
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 function GameListItem({ game }) {
   const isHc = game.team === 'hc'
   const gameDate = isHc ? game.start : game.date
   const venueStr = isHc ? (game.location || 'Veritas Areena') : game.venue
-  const label = isHc ? hcVenueLabel(game.isHome) : fcVenueLabel(game.isHome, game.opponent)
-  const color = matchColor(game.isHome, game.opponent)
+  const venueLabel = capitalize(isHc ? hcVenueLabel(game.isHome) : fcVenueLabel(game.isHome, game.opponent))
+  const league = leagueStyle(game)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const gameDay = new Date(gameDate)
+  gameDay.setHours(0, 0, 0, 0)
+  const days = Math.round((gameDay - today) / 86400000)
+  const dateLabel = days === 0 ? 'Tänään' : days === 1 ? 'Huomenna'
+    : `${WEEKDAYS_LONG[gameDate.getDay()]} ${gameDate.getDate()}.${gameDate.getMonth() + 1}.`
+  const countdown = days === 0 ? 'tänään' : days === 1 ? 'huomenna' : `${days} pv`
+  const timeStr = `${String(gameDate.getHours()).padStart(2,'0')}.${String(gameDate.getMinutes()).padStart(2,'0')}`
 
   return (
-    <div className="game-item-card" style={{ borderLeft: `3px solid ${color}`, background: `color-mix(in srgb, ${color} 6%, var(--card))` }}>
-      <div className="game-item-body">
-        <div className="game-item-tag">{isHc ? 'HC TPS' : 'FC TPS'}</div>
-        <div className="game-item-name">{matchName(game.opponent, game.isHome)}</div>
-        <div className="game-item-venue" style={{ color }}>{venueStr}{venueStr ? ' · ' : ''}{label}</div>
+    <div className="next-match-card" style={{ borderLeftColor: league.borderColor }}>
+      <div className="next-match-meta">
+        <span className="next-match-badge" style={{ background: league.badgeBg, color: league.badgeText }}>
+          {league.label}
+        </span>
+        <span className="next-match-date">{dateLabel}</span>
+        <span className="next-match-countdown">{countdown}</span>
       </div>
-      <div className="game-item-time">
-        <div>{shortDate(gameDate)}</div>
-        <div>{gameTime(gameDate)}</div>
+      <div className="next-match-body">
+        <div className="next-match-info">
+          <div className="next-match-title">{matchName(game.opponent, game.isHome)}</div>
+          <div className="next-match-venue">{venueStr ? `${venueStr} · ${venueLabel}` : venueLabel}</div>
+        </div>
+        <div className="next-match-time">
+          <span className="next-match-time-label">klo</span>
+          <span className="next-match-time-value">{timeStr}</span>
+        </div>
       </div>
     </div>
   )
@@ -341,7 +372,7 @@ export default function PageTPS() {
                 <span className="tps-upcoming-title">Tulevat ottelut</span>
                 <span className="tps-upcoming-count">{upcomingGames.length} ottelua</span>
               </div>
-              <div className="game-list">
+              <div className="next-match-list">
                 {upcomingGames.map((game, i) => (
                   <GameListItem key={i} game={game} />
                 ))}
