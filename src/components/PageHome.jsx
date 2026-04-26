@@ -921,8 +921,10 @@ export default function PageHome({ onNavigate }) {
       <PageHeader />
 
       <section className="quote-section" aria-label="Päivän sanonta">
-        <span className="quote-mark" aria-hidden="true">“</span>
-        <p className="quote-text">{dailyQuote}</p>
+        <p className="quote-text">
+          <span className="quote-mark" aria-hidden="true">“</span>
+          {dailyQuote}
+        </p>
         <div className="quote-caption">
           <span className="quote-caption-date">{todayShort}</span>
           {daylightSubtitle && (
