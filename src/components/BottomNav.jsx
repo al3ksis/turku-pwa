@@ -4,7 +4,7 @@ const TABS = [
   { id: 'home', label: 'Etusivu', accent: '#4a9eff' },
   { id: 'bus',  label: 'Bussit',  accent: '#4eff9f' },
   { id: 'news', label: 'Uutiset', accent: '#4a9eff' },
-  { id: 'tps',  label: 'TPS',     accent: '#ffcc00' },
+  { id: 'tps',  label: 'Ottelut', accent: '#ffcc00' },
 ]
 
 const Icons = {

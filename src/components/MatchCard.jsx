@@ -14,6 +14,7 @@ function ClockIcon() {
 
 export function FeatureMatchCard({
   teamName,
+  teamShortName = 'TPS',
   opponent,
   isHome,
   date,
@@ -26,7 +27,7 @@ export function FeatureMatchCard({
   const day = date.getDate()
   const month = MONTH_ABBR[date.getMonth()]
   const timeStr = `${String(date.getHours()).padStart(2, '0')}.${String(date.getMinutes()).padStart(2, '0')}`
-  const matchTitle = isHome ? `TPS – ${opponent}` : `${opponent} – TPS`
+  const matchTitle = isHome ? `${teamShortName} – ${opponent}` : `${opponent} – ${teamShortName}`
 
   return (
     <div className="feature-match-card" style={{ borderLeftColor: borderColor }}>

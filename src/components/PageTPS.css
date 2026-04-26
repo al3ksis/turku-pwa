@@ -7,6 +7,16 @@
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tps-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tps-tab {
+  flex-shrink: 0;
 }
 
 .tps-tab {
@@ -42,6 +52,10 @@
 
 .tab-dot.fc {
   background: var(--accent-green);
+}
+
+.tab-dot.inter {
+  background: #0052a5;
 }
 
 /* Section label */

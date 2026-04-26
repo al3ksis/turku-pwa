@@ -8,6 +8,8 @@ const HC_ICS = 'https://hc.tps.fi/fi-fi/?action=getContent&type=exportcalendar&f
 const HC_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(HC_ICS)}`
 const FC_PAGE = 'https://fc.tps.fi/ottelut/miesten-edustus/'
 const FC_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_PAGE)}`
+const INTER_PAGE = 'https://fcinter.fi/ottelut/edustus'
+const INTER_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(INTER_PAGE)}`
 
 // --- Parsers ---
 
@@ -96,10 +98,49 @@ function parseFcTpsHtml(html) {
   return games.sort((a, b) => a.date - b.date)
 }
 
+function parseFcInterHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  const games = []
+  const now = new Date()
+  const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4}),\s*KLO:\s*(\d{2}):(\d{2})/
+
+  let upcomingList = null
+  for (const h3 of doc.querySelectorAll('h3')) {
+    if (h3.textContent.trim().toLowerCase().includes('tulevat')) {
+      let el = h3.nextElementSibling
+      while (el && el.tagName !== 'UL') el = el.nextElementSibling
+      upcomingList = el
+      break
+    }
+  }
+  if (!upcomingList) return []
+
+  for (const li of upcomingList.querySelectorAll('li')) {
+    let date = null, venue = null, home = null, away = null
+    for (const p of li.querySelectorAll('p')) {
+      const text = p.textContent.trim()
+      const m = text.match(DATE_RE)
+      if (m) {
+        date = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])
+        venue = text.slice(m.index + m[0].length).replace(/^[,\s]+/, '').trim() || null
+      } else if (text.includes(' vs. ')) {
+        const [h, a] = text.split(' vs. ').map(s => s.trim())
+        home = h; away = a
+      }
+    }
+    if (!date || !home || !away || date <= now) continue
+    const isHome = home.toLowerCase().includes('inter')
+    const opponent = isHome ? away : home
+    games.push({ date, opponent, isHome, venue })
+  }
+  return games.sort((a, b) => a.date - b.date)
+}
+
 // --- Helpers ---
 
 function fcVenueLabel(isHome, opponent) {
-  if (opponent.toLowerCase().includes('inter')) return 'paikallispeli'
+  const opp = (opponent || '').toLowerCase()
+  if (opp.includes('inter') || opp.includes('tps')) return 'paikallispeli'
   return isHome ? 'koti' : 'vieraspeli'
 }
 
@@ -107,12 +148,10 @@ function hcVenueLabel(isHome) {
   return isHome ? 'kotiottellu' : 'vierasottelu'
 }
 
-function matchName(opponent, isHome) {
-  return isHome ? `TPS – ${opponent}` : `${opponent} – TPS`
-}
-
 function matchColorScheme(game) {
-  const isDerby = game.opponent && game.opponent.toLowerCase().includes('inter')
+  const opp = (game.opponent || '').toLowerCase()
+  const isDerby = (game.team === 'inter' && opp.includes('tps')) ||
+                  (game.team !== 'inter' && opp.includes('inter'))
   if (isDerby) return { border: '#ff4a6a', badgeBg: 'rgba(255, 74, 106, 0.18)', badgeText: '#ff8095' }
   if (game.isHome) return { border: '#4ade80', badgeBg: 'rgba(74, 222, 128, 0.18)', badgeText: '#4ade80' }
   return { border: '#60a5fa', badgeBg: 'rgba(96, 165, 250, 0.18)', badgeText: '#93c5fd' }
@@ -136,17 +175,27 @@ function venueLabelFor(game) {
   return raw.charAt(0).toUpperCase() + raw.slice(1)
 }
 
+function teamNameFor(game) {
+  if (game.team === 'hc') return 'HC TPS'
+  if (game.team === 'inter') return 'FC Inter'
+  return 'FC TPS'
+}
+
+function teamShortNameFor(game) {
+  return game.team === 'inter' ? 'Inter' : 'TPS'
+}
+
 // --- Sub-components ---
 
 function NextGameCard({ game }) {
   const isHc = game.team === 'hc'
   const gameDate = isHc ? game.start : game.date
-  const teamName = isHc ? 'HC TPS' : 'FC TPS'
   const colors = matchColorScheme(game)
 
   return (
     <FeatureMatchCard
-      teamName={teamName}
+      teamName={teamNameFor(game)}
+      teamShortName={teamShortNameFor(game)}
       opponent={game.opponent}
       isHome={game.isHome}
       date={gameDate}
@@ -170,6 +219,7 @@ function GameListItem({ game }) {
   const venueStr = isHc ? (game.location || 'Veritas Areena') : game.venue
   const venueLabel = capitalize(isHc ? hcVenueLabel(game.isHome) : fcVenueLabel(game.isHome, game.opponent))
   const colors = matchColorScheme(game)
+  const teamShort = teamShortNameFor(game)
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -180,6 +230,7 @@ function GameListItem({ game }) {
     : `${WEEKDAYS_LONG[gameDate.getDay()]} ${gameDate.getDate()}.${gameDate.getMonth() + 1}.`
   const countdown = days === 0 ? 'tänään' : days === 1 ? 'huomenna' : `${days} pv`
   const timeStr = `${String(gameDate.getHours()).padStart(2,'0')}.${String(gameDate.getMinutes()).padStart(2,'0')}`
+  const title = game.isHome ? `${teamShort} – ${game.opponent}` : `${game.opponent} – ${teamShort}`
 
   return (
     <div className="next-match-card" style={{ borderLeftColor: colors.border }}>
@@ -192,7 +243,7 @@ function GameListItem({ game }) {
       </div>
       <div className="next-match-body">
         <div className="next-match-info">
-          <div className="next-match-title">{matchName(game.opponent, game.isHome)}</div>
+          <div className="next-match-title">{title}</div>
           <div className="next-match-venue">{venueStr ? `${venueStr} · ${venueLabel}` : venueLabel}</div>
         </div>
         <div className="next-match-time">
@@ -224,8 +275,10 @@ export default function PageTPS() {
   const [tab, setTab] = useState('all')
   const [hcGames, setHcGames] = useState(null)
   const [fcGames, setFcGames] = useState(null)
+  const [interGames, setInterGames] = useState(null)
   const [hcLoading, setHcLoading] = useState(true)
   const [fcLoading, setFcLoading] = useState(true)
+  const [interLoading, setInterLoading] = useState(true)
 
   useEffect(() => {
     fetchWithTimeout(HC_URL)
@@ -239,27 +292,36 @@ export default function PageTPS() {
       .then(html => setFcGames(parseFcTpsHtml(html)))
       .catch(() => setFcGames([]))
       .finally(() => setFcLoading(false))
+
+    fetchWithTimeout(INTER_URL)
+      .then(r => r.text())
+      .then(html => setInterGames(parseFcInterHtml(html)))
+      .catch(() => setInterGames([]))
+      .finally(() => setInterLoading(false))
   }, [])
 
   const hcUpcoming = hcGames || []
   const fcUpcoming = fcGames || []
+  const interUpcoming = interGames || []
 
   const visibleGames = (() => {
     const hc = hcUpcoming.map(g => ({ ...g, team: 'hc', sortDate: g.start }))
     const fc = fcUpcoming.map(g => ({ ...g, team: 'fc', sortDate: g.date }))
+    const inter = interUpcoming.map(g => ({ ...g, team: 'inter', sortDate: g.date }))
     if (tab === 'hc') return hc
     if (tab === 'fc') return fc
-    return [...hc, ...fc].sort((a, b) => a.sortDate - b.sortDate)
+    if (tab === 'inter') return inter
+    return [...hc, ...fc, ...inter].sort((a, b) => a.sortDate - b.sortDate)
   })()
 
   const nextGame = visibleGames[0] || null
   const upcomingGames = visibleGames.slice(1)
-  const loading = hcLoading || fcLoading
+  const loading = hcLoading || fcLoading || interLoading
   const showSeasonEnded = !hcLoading && hcUpcoming.length === 0 && (tab === 'all' || tab === 'hc')
 
   return (
     <div className="page-tps">
-      <PageHeader title="TPS" />
+      <PageHeader title="OTTELUT" />
 
       <div className="tps-tabs">
         <button className={`tps-tab${tab === 'all' ? ' active' : ''}`} onClick={() => setTab('all')}>Kaikki</button>
@@ -268,6 +330,9 @@ export default function PageTPS() {
         </button>
         <button className={`tps-tab${tab === 'fc' ? ' active' : ''}`} onClick={() => setTab('fc')}>
           <span className="tab-dot fc" />FC TPS
+        </button>
+        <button className={`tps-tab${tab === 'inter' ? ' active' : ''}`} onClick={() => setTab('inter')}>
+          <span className="tab-dot inter" />FC Inter
         </button>
       </div>
 

@@ -7,7 +7,7 @@ export default async (req) => {
   }
 
   // Only allow specific domains
-  const allowed = ['hc.tps.fi', 'fc.tps.fi', 'feeds.yle.fi', 'yle.fi']
+  const allowed = ['hc.tps.fi', 'fc.tps.fi', 'feeds.yle.fi', 'yle.fi', 'fcinter.fi']
   const targetUrl = new URL(target)
 
   if (!allowed.includes(targetUrl.hostname)) {

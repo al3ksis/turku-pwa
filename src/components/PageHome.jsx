@@ -23,6 +23,9 @@ const YLE_RSS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(YLE_RSS)
 const FC_TPS_PAGE = 'https://fc.tps.fi/ottelut/miesten-edustus/'
 const FC_TPS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_TPS_PAGE)}`
 
+const FC_INTER_PAGE = 'https://fcinter.fi/ottelut/edustus'
+const FC_INTER_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_INTER_PAGE)}`
+
 const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
 
 // --- Weather codes ---
@@ -180,10 +183,18 @@ const HC_LEAGUE = {
   badgeText: '#5dabe5',
 }
 
-function NextHomeMatchCard({ game, league, teamName }) {
+const INTER_LEAGUE = {
+  label: 'VEIKKAUSLIIGA',
+  borderColor: '#e6007e',
+  badgeBg: 'rgba(212, 160, 23, 0.18)',
+  badgeText: '#d4a017',
+}
+
+function NextHomeMatchCard({ game, league, teamName, teamShortName = 'TPS' }) {
   return (
     <FeatureMatchCard
       teamName={teamName}
+      teamShortName={teamShortName}
       opponent={game.opponent}
       isHome={true}
       date={game.date}
@@ -432,6 +443,42 @@ function parseFcNextHomeGame(html) {
     if (!gameDate || !homeTeam || gameDate <= now) continue
     if (!homeTeam.toUpperCase().includes('TPS')) continue
     return { date: gameDate, opponent: awayTeam, venue: venue || 'Veritas Stadion' }
+  }
+  return null
+}
+
+function parseFcInterNextHomeGame(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  const now = new Date()
+  const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4}),\s*KLO:\s*(\d{2}):(\d{2})/
+
+  let upcomingList = null
+  for (const h3 of doc.querySelectorAll('h3')) {
+    if (h3.textContent.trim().toLowerCase().includes('tulevat')) {
+      let el = h3.nextElementSibling
+      while (el && el.tagName !== 'UL') el = el.nextElementSibling
+      upcomingList = el
+      break
+    }
+  }
+  if (!upcomingList) return null
+
+  for (const li of upcomingList.querySelectorAll('li')) {
+    let date = null, venue = null, home = null, away = null
+    for (const p of li.querySelectorAll('p')) {
+      const text = p.textContent.trim()
+      const m = text.match(DATE_RE)
+      if (m) {
+        date = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])
+        venue = text.slice(m.index + m[0].length).replace(/^[,\s]+/, '').trim() || null
+      } else if (text.includes(' vs. ')) {
+        const [h, a] = text.split(' vs. ').map(s => s.trim())
+        home = h; away = a
+      }
+    }
+    if (!date || !home || !away || date <= now) continue
+    if (!home.toLowerCase().includes('inter')) continue
+    return { date, opponent: away, venue: venue || 'Veritas Stadion' }
   }
   return null
 }
@@ -701,7 +748,7 @@ const WEATHER_CACHE_TTL_MS = 30 * 60 * 1000
 function readCachedTpsGames() {
   try {
     const raw = localStorage.getItem(TPS_CACHE_KEY)
-    if (!raw) return { hc: null, fc: null }
+    if (!raw) return { hc: null, fc: null, inter: null }
     const parsed = JSON.parse(raw)
     const now = Date.now()
     const revive = (g) => {
@@ -711,15 +758,15 @@ function readCachedTpsGames() {
       if (isNaN(date) || date.getTime() <= now) return null
       return { ...g, date }
     }
-    return { hc: revive(parsed.hc), fc: revive(parsed.fc) }
+    return { hc: revive(parsed.hc), fc: revive(parsed.fc), inter: revive(parsed.inter) }
   } catch {
-    return { hc: null, fc: null }
+    return { hc: null, fc: null, inter: null }
   }
 }
 
-function writeCachedTpsGames(hc, fc) {
+function writeCachedTpsGames(hc, fc, inter) {
   try {
-    localStorage.setItem(TPS_CACHE_KEY, JSON.stringify({ hc, fc }))
+    localStorage.setItem(TPS_CACHE_KEY, JSON.stringify({ hc, fc, inter }))
   } catch { /* silent */ }
 }
 
@@ -784,6 +831,7 @@ export default function PageHome({ onNavigate }) {
   const [news, setNews] = useState(() => readCachedNews())
   const [hcHomeGame, setHcHomeGame] = useState(() => readCachedTpsGames().hc)
   const [fcHomeGame, setFcHomeGame] = useState(() => readCachedTpsGames().fc)
+  const [interHomeGame, setInterHomeGame] = useState(() => readCachedTpsGames().inter)
   const [weatherExpanded, setWeatherExpanded] = useState(false)
   const [busStops, setBusStops] = useState(readBusStops)
   const [busHidden, setBusHidden] = useState(readHomeHidden)
@@ -861,11 +909,12 @@ export default function PageHome({ onNavigate }) {
 
   async function doFetchTPS() {
     try {
-      const [hcRes, fcRes] = await Promise.all([
+      const [hcRes, fcRes, interRes] = await Promise.all([
         fetchWithTimeout(TPS_ICS_URL),
         fetchWithTimeout(FC_TPS_URL),
+        fetchWithTimeout(FC_INTER_URL),
       ])
-      let hc = null, fc = null
+      let hc = null, fc = null, inter = null
       if (hcRes.ok) {
         hc = parseHcNextHomeGame(await hcRes.text())
         setHcHomeGame(hc)
@@ -874,7 +923,11 @@ export default function PageHome({ onNavigate }) {
         fc = parseFcNextHomeGame(await fcRes.text())
         setFcHomeGame(fc)
       }
-      writeCachedTpsGames(hc, fc)
+      if (interRes.ok) {
+        inter = parseFcInterNextHomeGame(await interRes.text())
+        setInterHomeGame(inter)
+      }
+      writeCachedTpsGames(hc, fc, inter)
     } catch { /* silent */ }
   }
 
@@ -1036,14 +1089,19 @@ export default function PageHome({ onNavigate }) {
       )}
 
       {/* Next home match section */}
-      {(fcHomeGame || hcHomeGame) && (
+      {(fcHomeGame || hcHomeGame || interHomeGame) && (
         <div className="home-section">
           <div className="home-section-heading">
-            <div className="home-section-title">{fcHomeGame && hcHomeGame ? 'Seuraavat kotiottelut' : 'Seuraava kotiottelu'}</div>
+            <div className="home-section-title">
+              {[fcHomeGame, hcHomeGame, interHomeGame].filter(Boolean).length > 1
+                ? 'Seuraavat kotiottelut'
+                : 'Seuraava kotiottelu'}
+            </div>
           </div>
           <div className="next-match-list">
             {fcHomeGame && <NextHomeMatchCard game={fcHomeGame} league={FC_LEAGUE} teamName="FC TPS" />}
             {hcHomeGame && <NextHomeMatchCard game={hcHomeGame} league={HC_LEAGUE} teamName="HC TPS" />}
+            {interHomeGame && <NextHomeMatchCard game={interHomeGame} league={INTER_LEAGUE} teamName="FC Inter" teamShortName="Inter" />}
           </div>
         </div>
       )}
