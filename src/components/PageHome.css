@@ -167,6 +167,11 @@
   color: var(--text-muted);
 }
 
+.hourly-wind {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 /* Air quality */
 
 .air-quality-section {

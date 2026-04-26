@@ -8,7 +8,7 @@ import './PageHome.css'
 const TURKU_LAT = 60.4518
 const TURKU_LON = 22.2666
 
-const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe/Helsinki&forecast_days=2`
+const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe/Helsinki&forecast_days=2`
 
 const AIR_QUALITY_URL = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${TURKU_LAT}&longitude=${TURKU_LON}&current=uv_index&hourly=birch_pollen,grass_pollen,alder_pollen&timezone=Europe/Helsinki&forecast_days=1`
 
@@ -259,6 +259,7 @@ function HourlyStrip({ forecast }) {
           <span className={h.precip > 20 ? 'hourly-precip hourly-precip-rain' : 'hourly-precip hourly-precip-none'}>
             {h.precip > 0 ? `${h.precip}%` : '—'}
           </span>
+          <span className="hourly-wind">{h.wind != null ? `${h.wind} m/s` : '—'}</span>
         </div>
       ))}
     </div>
@@ -355,6 +356,7 @@ function getHourlyForecast(hourlyData) {
         temp: Math.round(hourlyData.temperature_2m[i]),
         weatherCode: hourlyData.weather_code[i],
         precip: hourlyData.precipitation_probability[i] ?? 0,
+        wind: hourlyData.wind_speed_10m?.[i] != null ? Math.round(hourlyData.wind_speed_10m[i]) : null,
       })
     }
   }
@@ -961,9 +963,11 @@ export default function PageHome({ onNavigate }) {
               <div style={{ flex: 1 }}>
                 <div className="weather-temp">{Math.round(current.temperature_2m)}°</div>
                 <div className="weather-condition">
-                  {current.apparent_temperature != null
-                    ? `${weatherInfo.text} · tuntuu ${Math.round(current.apparent_temperature)}°`
-                    : weatherInfo.text}
+                  {[
+                    weatherInfo.text,
+                    current.apparent_temperature != null && `tuntuu ${Math.round(current.apparent_temperature)}°`,
+                    current.wind_speed_10m != null && `tuuli ${Math.round(current.wind_speed_10m)} m/s`,
+                  ].filter(Boolean).join(' · ')}
                 </div>
               </div>
               <svg aria-hidden="true" width="12" height="8" viewBox="0 0 12 8" className="weather-chevron" style={{ transform: weatherExpanded ? 'rotate(180deg)' : 'rotate(0)' }}>
@@ -982,29 +986,29 @@ export default function PageHome({ onNavigate }) {
         </div>
 
         {sunrise && sunset && (
-          <>
-            <SunArc sunrise={sunrise} sunset={sunset} />
-            <div className="weather-sun-strip">
-              <div className="sun-cell">
-                <div className="sun-label">NOUSI</div>
-                <div className="sun-value">{formatTimeStr(sunrise)}</div>
-              </div>
-              <div className="sun-cell sun-cell-center">
-                <div className="sun-label">PÄIVÄN PITUUS</div>
-                <div className="sun-value">
-                  {daylight ? `${daylight.hours}t ${daylight.minutes}min` : '—'}
-                </div>
-              </div>
-              <div className="sun-cell sun-cell-right">
-                <div className="sun-label">LASKEE</div>
-                <div className="sun-value sun-value-orange">{formatTimeStr(sunset)}</div>
+          <div className="weather-sun-strip">
+            <div className="sun-cell">
+              <div className="sun-label">NOUSI</div>
+              <div className="sun-value">{formatTimeStr(sunrise)}</div>
+            </div>
+            <div className="sun-cell sun-cell-center">
+              <div className="sun-label">PÄIVÄN PITUUS</div>
+              <div className="sun-value">
+                {daylight ? `${daylight.hours}t ${daylight.minutes}min` : '—'}
               </div>
             </div>
-          </>
+            <div className="sun-cell sun-cell-right">
+              <div className="sun-label">LASKEE</div>
+              <div className="sun-value sun-value-orange">{formatTimeStr(sunset)}</div>
+            </div>
+          </div>
         )}
 
         {weatherExpanded && (
           <div className="weather-expanded">
+            {sunrise && sunset && (
+              <SunArc sunrise={sunrise} sunset={sunset} />
+            )}
             {hourlyForecast.length > 0 && (
               <>
                 <div className="section-label">LOPPUPÄIVÄN ENNUSTE</div>
