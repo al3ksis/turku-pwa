@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
 import { PageHeader } from './PageHeader'
 import './PageHome.css'
@@ -459,51 +459,241 @@ query GetDepartures($stopId: String!, $numberOfDepartures: Int!) {
 }
 `
 
-async function fetchBus() {
+const BUS_REFRESH_MS = 30000
+const BUS_SOON_MINUTES = 5
+
+function readBusStops() {
   try {
     const saved = localStorage.getItem('busStops')
-    if (!saved) return null
-    const stops = JSON.parse(saved)
-    if (!stops?.length) return null
+    return saved ? JSON.parse(saved) : []
+  } catch { return [] }
+}
 
-    const apiKey = import.meta.env.VITE_DIGITRANSIT_API_KEY || ''
-    const customNames = JSON.parse(localStorage.getItem('busStopNames') || '{}')
+function readCustomNames() {
+  try {
+    return JSON.parse(localStorage.getItem('busStopNames') || '{}')
+  } catch { return {} }
+}
+
+function readApiNames() {
+  try {
+    return JSON.parse(localStorage.getItem('busApiNames') || '{}')
+  } catch { return {} }
+}
+
+function writeApiNames(names) {
+  try {
+    localStorage.setItem('busApiNames', JSON.stringify(names))
+  } catch { /* silent */ }
+}
+
+function readHomeHidden() {
+  try {
+    return JSON.parse(localStorage.getItem('busHomeHidden') || '[]')
+  } catch { return [] }
+}
+
+function writeHomeHidden(hidden) {
+  try {
+    localStorage.setItem('busHomeHidden', JSON.stringify(hidden))
+  } catch { /* silent */ }
+}
+
+function writeBusStops(stops) {
+  try {
+    localStorage.setItem('busStops', JSON.stringify(stops))
+  } catch { /* silent */ }
+}
+
+async function fetchNextDeparture(stopId, apiKey) {
+  try {
+    const res = await fetchWithTimeout(DIGITRANSIT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'digitransit-subscription-key': apiKey },
+      body: JSON.stringify({ query: BUS_QUERY, variables: { stopId, numberOfDepartures: 5 } }),
+    })
+    const json = await res.json()
+    const stop = json.data?.stop
+    if (!stop) return { apiName: null, departure: null }
     const now = Date.now()
-
-    const results = await Promise.all(stops.map(async stopId => {
-      try {
-        const res = await fetchWithTimeout(DIGITRANSIT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'digitransit-subscription-key': apiKey },
-          body: JSON.stringify({ query: BUS_QUERY, variables: { stopId, numberOfDepartures: 5 } }),
-        })
-        const json = await res.json()
-        if (!json.data?.stop) return []
-        const stop = json.data.stop
-        const stopName = customNames[stopId] || stop.name
-        return stop.stoptimesWithoutPatterns
-          .map(dep => {
-            const depSeconds = dep.realtime ? dep.realtimeDeparture : dep.scheduledDeparture
-            const depMs = (dep.serviceDay + depSeconds) * 1000
-            const mins = Math.floor((depMs - now) / 60000)
-            const depDate = new Date(depMs)
-            const time = `${String(depDate.getHours()).padStart(2, '0')}:${String(depDate.getMinutes()).padStart(2, '0')}`
-            return { stopName, line: dep.trip.route.shortName, dest: dep.headsign, mins, time, depMs }
-          })
-          .filter(d => d.mins >= 0)
-      } catch {
-        return []
-      }
-    }))
-
-    const departures = results.flat().sort((a, b) => a.depMs - b.depMs).slice(0, 6)
-    if (!departures.length) return null
-
-    const stopNames = stops.map(id => customNames[id] || null).filter(Boolean)
-    return { departures, stopNames }
+    const departure = stop.stoptimesWithoutPatterns
+      .map(dep => {
+        const depSeconds = dep.realtime ? dep.realtimeDeparture : dep.scheduledDeparture
+        const depMs = (dep.serviceDay + depSeconds) * 1000
+        return {
+          line: dep.trip.route.shortName,
+          mins: Math.floor((depMs - now) / 60000),
+          depMs,
+        }
+      })
+      .filter(d => d.mins >= 0)[0] || null
+    return { apiName: stop.name, departure }
   } catch {
-    return null
+    return { apiName: null, departure: null }
   }
+}
+
+// --- Bus home section + edit modal ---
+
+function BusHomeSection({ stops, departures, hasAnyStops, onEdit }) {
+  if (!hasAnyStops) return null
+  return (
+    <div className="home-section">
+      <div className="home-section-heading">
+        <div>
+          <div className="home-section-title">Seuraavat bussit</div>
+          <div className="home-section-sub">Föli</div>
+        </div>
+        <button className="home-section-edit" onClick={onEdit}>Muokkaa</button>
+      </div>
+      {stops.length === 0 ? (
+        <div className="bus-home-card bus-home-empty-card">
+          Kaikki pysäkit piilotettu — valitse näytettävät Muokkaa-painikkeesta.
+        </div>
+      ) : (
+      <div className="bus-home-card">
+        {stops.map((stopId, i) => {
+          const item = departures[stopId]
+          const dep = item?.departure
+          const soon = dep && dep.mins <= BUS_SOON_MINUTES
+          return (
+            <div key={stopId} className={`bus-home-row ${i > 0 ? 'with-divider' : ''}`}>
+              <img src="/foli-logo.svg" alt="" className="bus-home-logo" />
+              <span className="bus-home-stop-name">{item?.stopName || stopId.replace('FOLI:', '')}</span>
+              {dep ? (
+                <>
+                  <span className={`bus-home-line ${soon ? 'soon' : ''}`}>{dep.line}</span>
+                  <span className={`bus-home-mins ${soon ? 'soon' : ''}`}>
+                    {dep.mins === 0 ? 'nyt' : `${dep.mins} min`}
+                  </span>
+                </>
+              ) : item ? (
+                <span className="bus-home-empty">Ei lähtöjä</span>
+              ) : (
+                <span className="skeleton-row bus-home-skeleton" />
+              )}
+            </div>
+          )
+        })}
+      </div>
+      )}
+    </div>
+  )
+}
+
+function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose }) {
+  const [order, setOrder] = useState(allStops)
+  const [hidden, setHidden] = useState(initialHidden)
+  const [draggingIdx, setDraggingIdx] = useState(null)
+  const itemRefs = useRef([])
+
+  function toggleHidden(stopId) {
+    setHidden(h => h.includes(stopId) ? h.filter(s => s !== stopId) : [...h, stopId])
+  }
+
+  function handleDone() {
+    onClose({ order, hidden })
+  }
+
+  useEffect(() => {
+    if (draggingIdx == null) return
+
+    function move(e) {
+      const y = e.clientY
+      for (let i = 0; i < itemRefs.current.length; i++) {
+        if (i === draggingIdx) continue
+        const rect = itemRefs.current[i]?.getBoundingClientRect()
+        if (!rect) continue
+        if (y >= rect.top && y <= rect.bottom) {
+          setOrder(curr => {
+            const next = [...curr]
+            const [moved] = next.splice(draggingIdx, 1)
+            next.splice(i, 0, moved)
+            return next
+          })
+          setDraggingIdx(i)
+          break
+        }
+      }
+    }
+
+    function up() { setDraggingIdx(null) }
+
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+  }, [draggingIdx])
+
+  return (
+    <div className="bus-edit-backdrop" onClick={handleDone}>
+      <div className="bus-edit-sheet" onClick={e => e.stopPropagation()}>
+        <div className="bus-edit-grabber" />
+        <div className="bus-edit-header">
+          <div className="bus-edit-header-text">
+            <div className="bus-edit-title">Muokkaa pysäkkejä</div>
+            <div className="bus-edit-sub">Vedä järjestääksesi · valitse näytettäväksi</div>
+          </div>
+          <button className="bus-edit-done" onClick={handleDone}>Valmis</button>
+        </div>
+        <div className="bus-edit-list">
+          {order.map((stopId, i) => {
+            const visible = !hidden.includes(stopId)
+            const apiId = stopId.replace('FOLI:', '')
+            const displayName = customNames[stopId] || apiNames[stopId] || apiId
+            return (
+              <div
+                key={stopId}
+                ref={el => { itemRefs.current[i] = el }}
+                className={`bus-edit-row ${draggingIdx === i ? 'dragging' : ''}`}
+              >
+                <div
+                  className="bus-edit-handle"
+                  onPointerDown={(e) => { e.preventDefault(); setDraggingIdx(i) }}
+                  aria-label="Vedä järjestääksesi"
+                  role="button"
+                >
+                  <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
+                    <circle cx="2" cy="3" r="1.3" fill="currentColor"/>
+                    <circle cx="8" cy="3" r="1.3" fill="currentColor"/>
+                    <circle cx="2" cy="8" r="1.3" fill="currentColor"/>
+                    <circle cx="8" cy="8" r="1.3" fill="currentColor"/>
+                    <circle cx="2" cy="13" r="1.3" fill="currentColor"/>
+                    <circle cx="8" cy="13" r="1.3" fill="currentColor"/>
+                  </svg>
+                </div>
+                <img src="/foli-logo.svg" alt="" className="bus-edit-logo" />
+                <div className="bus-edit-name-col">
+                  <div className="bus-edit-name">{displayName}</div>
+                  <div className="bus-edit-id">Tunnus {apiId}</div>
+                </div>
+                <button
+                  type="button"
+                  className={`bus-edit-checkbox ${visible ? 'checked' : ''}`}
+                  onClick={() => toggleHidden(stopId)}
+                  aria-pressed={visible}
+                  aria-label={visible ? 'Piilota etusivulta' : 'Näytä etusivulla'}
+                >
+                  {visible && (
+                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                      <path d="M3 7l3 3 5-6" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            )
+          })}
+          {order.length === 0 && (
+            <div className="bus-edit-empty">Ei tallennettuja pysäkkejä. Lisää pysäkki Bussit-välilehdellä.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // --- TPS cache (stale-while-revalidate via localStorage) ---
@@ -544,6 +734,48 @@ export default function PageHome({ onNavigate }) {
   const [hcHomeGame, setHcHomeGame] = useState(() => readCachedTpsGames().hc)
   const [fcHomeGame, setFcHomeGame] = useState(() => readCachedTpsGames().fc)
   const [weatherExpanded, setWeatherExpanded] = useState(false)
+  const [busStops, setBusStops] = useState(readBusStops)
+  const [busHidden, setBusHidden] = useState(readHomeHidden)
+  const [busDepartures, setBusDepartures] = useState({})
+  const [editingBuses, setEditingBuses] = useState(false)
+  const visibleBusStops = busStops.filter(s => !busHidden.includes(s))
+
+  async function doFetchBuses() {
+    if (!visibleBusStops.length) return
+    const apiKey = import.meta.env.VITE_DIGITRANSIT_API_KEY || ''
+    const customNames = readCustomNames()
+    const results = await Promise.all(
+      visibleBusStops.map(async stopId => {
+        const { apiName, departure } = await fetchNextDeparture(stopId, apiKey)
+        const stopName = customNames[stopId] || apiName || stopId.replace('FOLI:', '')
+        return [stopId, { stopName, apiName, departure }]
+      })
+    )
+    const departures = Object.fromEntries(results)
+    setBusDepartures(departures)
+
+    const cached = readApiNames()
+    let changed = false
+    for (const [id, { apiName }] of Object.entries(departures)) {
+      if (apiName && cached[id] !== apiName) {
+        cached[id] = apiName
+        changed = true
+      }
+    }
+    if (changed) writeApiNames(cached)
+  }
+
+  function handleBusEditClose({ order, hidden }) {
+    if (order.join(',') !== busStops.join(',')) {
+      writeBusStops(order)
+      setBusStops(order)
+    }
+    if (hidden.join(',') !== busHidden.join(',')) {
+      writeHomeHidden(hidden)
+      setBusHidden(hidden)
+    }
+    setEditingBuses(false)
+  }
 
   async function doFetchWeather() {
     try {
@@ -587,6 +819,13 @@ export default function PageHome({ onNavigate }) {
     doFetchNews()
     doFetchTPS()
   }, [])
+
+  useEffect(() => {
+    if (editingBuses) return
+    doFetchBuses()
+    const interval = setInterval(doFetchBuses, BUS_REFRESH_MS)
+    return () => clearInterval(interval)
+  }, [busStops, busHidden, editingBuses])
 
   // Derived weather data
   const current = weather?.current
@@ -686,6 +925,24 @@ export default function PageHome({ onNavigate }) {
           </div>
         )}
       </div>
+
+      {/* Bus home section */}
+      <BusHomeSection
+        stops={visibleBusStops}
+        departures={busDepartures}
+        hasAnyStops={busStops.length > 0}
+        onEdit={() => setEditingBuses(true)}
+      />
+
+      {editingBuses && (
+        <BusEditModal
+          allStops={busStops}
+          customNames={readCustomNames()}
+          apiNames={readApiNames()}
+          initialHidden={busHidden}
+          onClose={handleBusEditClose}
+        />
+      )}
 
       {/* TPS home game cards */}
       {(fcHomeGame || hcHomeGame) && (
