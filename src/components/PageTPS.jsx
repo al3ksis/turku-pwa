@@ -310,7 +310,7 @@ export default function PageTPS() {
 
   return (
     <div className="page-tps">
-      <PageHeader title="TPS" subtitle="Turun Palloseura · kaikki joukkueet" />
+      <PageHeader title="TPS" />
 
       <div className="tps-tabs">
         <button className={`tps-tab${tab === 'all' ? ' active' : ''}`} onClick={() => setTab('all')}>Kaikki</button>

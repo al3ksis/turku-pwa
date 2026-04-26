@@ -554,10 +554,7 @@ function BusHomeSection({ stops, departures, hasAnyStops, onEdit }) {
   return (
     <div className="home-section">
       <div className="home-section-heading">
-        <div>
-          <div className="home-section-title">Seuraavat bussit</div>
-          <div className="home-section-sub">Föli</div>
-        </div>
+        <div className="home-section-title">Seuraavat bussit</div>
         <button className="home-section-edit" onClick={onEdit}>Muokkaa</button>
       </div>
       {stops.length === 0 ? (
@@ -1042,28 +1039,17 @@ export default function PageHome({ onNavigate }) {
       )}
 
       {/* Next match section */}
-      {(fcHomeGame || hcHomeGame) && (() => {
-        const both = fcHomeGame && hcHomeGame
-        const subtitle = both
-          ? 'FC TPS · HC TPS'
-          : fcHomeGame
-            ? 'FC TPS · Veikkausliiga'
-            : 'HC TPS · Liiga'
-        return (
-          <div className="home-section">
-            <div className="home-section-heading">
-              <div>
-                <div className="home-section-title">{both ? 'Seuraavat ottelut' : 'Seuraava ottelu'}</div>
-                <div className="home-section-sub">{subtitle}</div>
-              </div>
-            </div>
-            <div className="next-match-list">
-              {fcHomeGame && <NextMatchCard game={fcHomeGame} league={FC_LEAGUE} />}
-              {hcHomeGame && <NextMatchCard game={hcHomeGame} league={HC_LEAGUE} />}
-            </div>
+      {(fcHomeGame || hcHomeGame) && (
+        <div className="home-section">
+          <div className="home-section-heading">
+            <div className="home-section-title">{fcHomeGame && hcHomeGame ? 'Seuraavat ottelut' : 'Seuraava ottelu'}</div>
           </div>
-        )
-      })()}
+          <div className="next-match-list">
+            {fcHomeGame && <NextMatchCard game={fcHomeGame} league={FC_LEAGUE} />}
+            {hcHomeGame && <NextMatchCard game={hcHomeGame} league={HC_LEAGUE} />}
+          </div>
+        </div>
+      )}
 
 
       {/* News section */}
