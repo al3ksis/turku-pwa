@@ -26,6 +26,9 @@ const FC_TPS_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_TPS_PA
 const FC_INTER_PAGE = 'https://fcinter.fi/ottelut/edustus'
 const FC_INTER_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_INTER_PAGE)}`
 
+const FC_NAISET_PAGE = 'https://fc.tps.fi/ottelut/naisten-edustus/'
+const FC_NAISET_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_NAISET_PAGE)}`
+
 const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
 
 // --- Weather codes ---
@@ -188,6 +191,13 @@ const INTER_LEAGUE = {
   borderColor: '#e6007e',
   badgeBg: 'rgba(212, 160, 23, 0.18)',
   badgeText: '#d4a017',
+}
+
+const NAISET_LEAGUE = {
+  label: 'KANSALLINEN YKKÖNEN',
+  borderColor: '#372A95',
+  badgeBg: 'rgba(55, 42, 149, 0.22)',
+  badgeText: '#b3a8f5',
 }
 
 function NextHomeMatchCard({ game, league, teamName, teamShortName = 'TPS' }) {
@@ -765,7 +775,7 @@ const WEATHER_CACHE_TTL_MS = 30 * 60 * 1000
 function readCachedTpsGames() {
   try {
     const raw = localStorage.getItem(TPS_CACHE_KEY)
-    if (!raw) return { hc: null, fc: null, inter: null }
+    if (!raw) return { hc: null, fc: null, inter: null, naiset: null }
     const parsed = JSON.parse(raw)
     const now = Date.now()
     const revive = (g) => {
@@ -775,15 +785,15 @@ function readCachedTpsGames() {
       if (isNaN(date) || date.getTime() <= now) return null
       return { ...g, date }
     }
-    return { hc: revive(parsed.hc), fc: revive(parsed.fc), inter: revive(parsed.inter) }
+    return { hc: revive(parsed.hc), fc: revive(parsed.fc), inter: revive(parsed.inter), naiset: revive(parsed.naiset) }
   } catch {
-    return { hc: null, fc: null, inter: null }
+    return { hc: null, fc: null, inter: null, naiset: null }
   }
 }
 
-function writeCachedTpsGames(hc, fc, inter) {
+function writeCachedTpsGames(hc, fc, inter, naiset) {
   try {
-    localStorage.setItem(TPS_CACHE_KEY, JSON.stringify({ hc, fc, inter }))
+    localStorage.setItem(TPS_CACHE_KEY, JSON.stringify({ hc, fc, inter, naiset }))
   } catch { /* silent */ }
 }
 
@@ -849,6 +859,7 @@ export default function PageHome({ onNavigate }) {
   const [hcHomeGame, setHcHomeGame] = useState(() => readCachedTpsGames().hc)
   const [fcHomeGame, setFcHomeGame] = useState(() => readCachedTpsGames().fc)
   const [interHomeGame, setInterHomeGame] = useState(() => readCachedTpsGames().inter)
+  const [naisetHomeGame, setNaisetHomeGame] = useState(() => readCachedTpsGames().naiset)
   const [weatherExpanded, setWeatherExpanded] = useState(false)
   const [busStops, setBusStops] = useState(readBusStops)
   const [busHidden, setBusHidden] = useState(readHomeHidden)
@@ -926,12 +937,13 @@ export default function PageHome({ onNavigate }) {
 
   async function doFetchTPS() {
     try {
-      const [hcRes, fcRes, interRes] = await Promise.all([
+      const [hcRes, fcRes, interRes, naisetRes] = await Promise.all([
         fetchWithTimeout(TPS_ICS_URL),
         fetchWithTimeout(FC_TPS_URL),
         fetchWithTimeout(FC_INTER_URL),
+        fetchWithTimeout(FC_NAISET_URL),
       ])
-      let hc = null, fc = null, inter = null
+      let hc = null, fc = null, inter = null, naiset = null
       if (hcRes.ok) {
         hc = parseHcNextHomeGame(await hcRes.text())
         setHcHomeGame(hc)
@@ -944,7 +956,11 @@ export default function PageHome({ onNavigate }) {
         inter = parseFcInterNextHomeGame(await interRes.text())
         setInterHomeGame(inter)
       }
-      writeCachedTpsGames(hc, fc, inter)
+      if (naisetRes.ok) {
+        naiset = parseFcNextHomeGame(await naisetRes.text())
+        setNaisetHomeGame(naiset)
+      }
+      writeCachedTpsGames(hc, fc, inter, naiset)
     } catch { /* silent */ }
   }
 
@@ -1106,11 +1122,11 @@ export default function PageHome({ onNavigate }) {
       )}
 
       {/* Next home match section */}
-      {(fcHomeGame || hcHomeGame || interHomeGame) && (
+      {(fcHomeGame || hcHomeGame || interHomeGame || naisetHomeGame) && (
         <div className="home-section">
           <div className="home-section-heading">
             <div className="home-section-title">
-              {[fcHomeGame, hcHomeGame, interHomeGame].filter(Boolean).length > 1
+              {[fcHomeGame, hcHomeGame, interHomeGame, naisetHomeGame].filter(Boolean).length > 1
                 ? 'Seuraavat kotiottelut'
                 : 'Seuraava kotiottelu'}
             </div>
@@ -1119,6 +1135,7 @@ export default function PageHome({ onNavigate }) {
             {fcHomeGame && <NextHomeMatchCard game={fcHomeGame} league={FC_LEAGUE} teamName="FC TPS" />}
             {hcHomeGame && <NextHomeMatchCard game={hcHomeGame} league={HC_LEAGUE} teamName="HC TPS" />}
             {interHomeGame && <NextHomeMatchCard game={interHomeGame} league={INTER_LEAGUE} teamName="FC Inter" teamShortName="Inter" />}
+            {naisetHomeGame && <NextHomeMatchCard game={naisetHomeGame} league={NAISET_LEAGUE} teamName="FC TPS Naiset" />}
           </div>
         </div>
       )}

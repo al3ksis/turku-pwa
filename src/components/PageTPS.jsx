@@ -10,6 +10,8 @@ const FC_PAGE = 'https://fc.tps.fi/ottelut/miesten-edustus/'
 const FC_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_PAGE)}`
 const INTER_PAGE = 'https://fcinter.fi/ottelut/edustus'
 const INTER_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(INTER_PAGE)}`
+const FC_NAISET_PAGE = 'https://fc.tps.fi/ottelut/naisten-edustus/'
+const FC_NAISET_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_NAISET_PAGE)}`
 
 // --- Parsers ---
 
@@ -92,6 +94,7 @@ function parseFcTpsHtml(html) {
     const opponent = isHome ? awayTeam : homeTeam
     const rowText = row.textContent
     const competition = rowText.includes('Veikkausliiga') ? 'Veikkausliiga' :
+                        rowText.includes('Kansallinen Ykkönen') ? 'Kansallinen Ykkönen' :
                         rowText.includes('Cup') ? 'Cup' : 'FC TPS'
 
     games.push({ date: gameDate, opponent, isHome, venue: venue || (isHome ? 'Veritas Stadion' : ''), competition })
@@ -183,12 +186,14 @@ function matchColorScheme(game) {
 
 function leagueLabel(game) {
   if (game.team === 'hc') return 'LIIGA'
+  if (game.team === 'naiset') return 'KANSALLINEN YKKÖNEN'
   if (game.competition === 'Cup') return 'CUP'
   return 'VEIKKAUSLIIGA'
 }
 
 function leagueBadgeColors(game) {
   if (game.team === 'hc') return { bg: 'rgba(30, 136, 229, 0.18)', text: '#5dabe5' }
+  if (game.team === 'naiset') return { bg: 'rgba(55, 42, 149, 0.22)', text: '#b3a8f5' }
   if (game.competition === 'Cup') return { bg: 'rgba(249, 115, 22, 0.18)', text: '#fb923c' }
   return { bg: 'rgba(212, 160, 23, 0.18)', text: '#d4a017' }
 }
@@ -202,6 +207,7 @@ function venueLabelFor(game) {
 function teamNameFor(game) {
   if (game.team === 'hc') return 'HC TPS'
   if (game.team === 'inter') return 'FC Inter'
+  if (game.team === 'naiset') return 'FC TPS Naiset'
   return 'FC TPS'
 }
 
@@ -300,9 +306,11 @@ export default function PageTPS() {
   const [hcGames, setHcGames] = useState(null)
   const [fcGames, setFcGames] = useState(null)
   const [interGames, setInterGames] = useState(null)
+  const [naisetGames, setNaisetGames] = useState(null)
   const [hcLoading, setHcLoading] = useState(true)
   const [fcLoading, setFcLoading] = useState(true)
   const [interLoading, setInterLoading] = useState(true)
+  const [naisetLoading, setNaisetLoading] = useState(true)
 
   useEffect(() => {
     fetchWithTimeout(HC_URL)
@@ -322,31 +330,40 @@ export default function PageTPS() {
       .then(html => setInterGames(parseFcInterHtml(html)))
       .catch(() => setInterGames([]))
       .finally(() => setInterLoading(false))
+
+    fetchWithTimeout(FC_NAISET_URL)
+      .then(r => r.text())
+      .then(html => setNaisetGames(parseFcTpsHtml(html)))
+      .catch(() => setNaisetGames([]))
+      .finally(() => setNaisetLoading(false))
   }, [])
 
   const hcUpcoming = hcGames || []
   const fcUpcoming = fcGames || []
   const interUpcoming = interGames || []
+  const naisetUpcoming = naisetGames || []
 
   const hcArr = hcUpcoming.map(g => ({ ...g, team: 'hc', sortDate: g.start }))
   const fcArr = fcUpcoming.map(g => ({ ...g, team: 'fc', sortDate: g.date }))
   const interArr = interUpcoming.map(g => ({ ...g, team: 'inter', sortDate: g.date }))
+  const naisetArr = naisetUpcoming.map(g => ({ ...g, team: 'naiset', sortDate: g.date }))
 
   const visibleGames = (() => {
     if (tab === 'hc') return hcArr
     if (tab === 'fc') return fcArr
     if (tab === 'inter') return interArr
-    return [...hcArr, ...fcArr, ...interArr].sort((a, b) => a.sortDate - b.sortDate)
+    if (tab === 'naiset') return naisetArr
+    return [...hcArr, ...fcArr, ...interArr, ...naisetArr].sort((a, b) => a.sortDate - b.sortDate)
   })()
 
   const nextGames = tab === 'all'
-    ? [hcArr[0], fcArr[0], interArr[0]].filter(Boolean).sort((a, b) => a.sortDate - b.sortDate)
+    ? [hcArr[0], fcArr[0], interArr[0], naisetArr[0]].filter(Boolean).sort((a, b) => a.sortDate - b.sortDate)
     : visibleGames.slice(0, 1)
 
   const nextSet = new Set(nextGames)
   const upcomingGames = visibleGames.filter(g => !nextSet.has(g))
   const nextLabel = nextGames.length > 1 ? 'SEURAAVAT OTTELUT' : 'SEURAAVA OTTELU'
-  const loading = hcLoading || fcLoading || interLoading
+  const loading = hcLoading || fcLoading || interLoading || naisetLoading
   const showSeasonEnded = !hcLoading && hcUpcoming.length === 0 && (tab === 'all' || tab === 'hc')
 
   return (
@@ -363,6 +380,9 @@ export default function PageTPS() {
         </button>
         <button className={`tps-tab${tab === 'inter' ? ' active' : ''}`} onClick={() => setTab('inter')}>
           <span className="tab-dot inter" />FC Inter
+        </button>
+        <button className={`tps-tab${tab === 'naiset' ? ' active' : ''}`} onClick={() => setTab('naiset')}>
+          <span className="tab-dot naiset" />FC TPS Naiset
         </button>
       </div>
 
