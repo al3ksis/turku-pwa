@@ -89,7 +89,7 @@ src/
 │   ├── PageHome.jsx      # Quote, weather, buses, matches, news (with edit modals)
 │   ├── PageBus.jsx       # Bus tab wrapper with edit toggle
 │   ├── BusWidget.jsx     # Departure list + edit mode (drag, routes, add/remove)
-│   ├── PageTPS.jsx       # Match tabs + Tulevat ottelut list
+│   ├── PageOttelut.jsx   # Match tabs + Tulevat ottelut list
 │   ├── MatchCard.jsx     # Shared FeatureMatchCard for home + Ottelut
 │   ├── PageNews.jsx
 │   ├── NewsWidget.jsx

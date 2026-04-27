@@ -3,7 +3,7 @@ import BottomNav from './components/BottomNav'
 import PageHome from './components/PageHome'
 import PageBus from './components/PageBus'
 import PageNews from './components/PageNews'
-import PageTPS from './components/PageTPS'
+import PageOttelut from './components/PageOttelut'
 import './App.css'
 
 export default function App() {
@@ -28,7 +28,7 @@ export default function App() {
         {activeTab === 'home' && <PageHome onNavigate={handleTabChange} onGotoBusEdit={goToBusEdit} />}
         {activeTab === 'bus' && <PageBus initialEditing={busEditingInitial} onConsumeInitial={() => setBusEditingInitial(false)} />}
         {activeTab === 'news' && <PageNews />}
-        {activeTab === 'tps' && <PageTPS />}
+        {activeTab === 'tps' && <PageOttelut />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </>

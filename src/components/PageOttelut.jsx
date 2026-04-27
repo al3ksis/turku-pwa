@@ -1,8 +1,42 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
 import { PageHeader } from './PageHeader'
 import { FeatureMatchCard } from './MatchCard'
-import './PageTPS.css'
+import './PageOttelut.css'
+
+// --- SWR list cache ---
+
+const TPS_LIST_CACHE_KEY = 'tpsListCache'
+
+function reviveList(list, dateField) {
+  if (!Array.isArray(list)) return null
+  const now = Date.now()
+  return list
+    .map(g => ({ ...g, [dateField]: new Date(g[dateField]) }))
+    .filter(g => !isNaN(g[dateField]) && g[dateField].getTime() > now)
+}
+
+function readCachedTpsList() {
+  try {
+    const raw = localStorage.getItem(TPS_LIST_CACHE_KEY)
+    if (!raw) return { hc: null, fc: null, inter: null, naiset: null }
+    const parsed = JSON.parse(raw)
+    return {
+      hc: reviveList(parsed.hc, 'start'),
+      fc: reviveList(parsed.fc, 'date'),
+      inter: reviveList(parsed.inter, 'date'),
+      naiset: reviveList(parsed.naiset, 'date'),
+    }
+  } catch {
+    return { hc: null, fc: null, inter: null, naiset: null }
+  }
+}
+
+function writeCachedTpsList(cache) {
+  try {
+    localStorage.setItem(TPS_LIST_CACHE_KEY, JSON.stringify(cache))
+  } catch { /* silent */ }
+}
 
 const HC_ICS = 'https://hc.tps.fi/fi-fi/?action=getContent&type=exportcalendar&format=ics&levelId=64&season=2026'
 const HC_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(HC_ICS)}`
@@ -302,41 +336,67 @@ function SeasonEndedCard() {
 
 // --- Main ---
 
-export default function PageTPS() {
+export default function PageOttelut() {
+  const cached = useRef(readCachedTpsList())
   const [tab, setTab] = useState('all')
-  const [hcGames, setHcGames] = useState(null)
-  const [fcGames, setFcGames] = useState(null)
-  const [interGames, setInterGames] = useState(null)
-  const [naisetGames, setNaisetGames] = useState(null)
+  const [hcGames, setHcGames] = useState(cached.current.hc)
+  const [fcGames, setFcGames] = useState(cached.current.fc)
+  const [interGames, setInterGames] = useState(cached.current.inter)
+  const [naisetGames, setNaisetGames] = useState(cached.current.naiset)
   const [hcLoading, setHcLoading] = useState(true)
   const [fcLoading, setFcLoading] = useState(true)
   const [interLoading, setInterLoading] = useState(true)
   const [naisetLoading, setNaisetLoading] = useState(true)
 
   useEffect(() => {
+    function persist() {
+      writeCachedTpsList(cached.current)
+    }
+
     fetchWithTimeout(HC_URL)
       .then(r => r.text())
-      .then(text => setHcGames(parseHcTpsIcs(text)))
+      .then(text => {
+        const parsed = parseHcTpsIcs(text)
+        setHcGames(parsed)
+        cached.current.hc = parsed
+        persist()
+      })
       .catch(() => setHcGames([]))
       .finally(() => setHcLoading(false))
 
     fetchWithTimeout(FC_URL)
       .then(r => r.text())
-      .then(html => setFcGames(parseFcTpsHtml(html)))
+      .then(html => {
+        const parsed = parseFcTpsHtml(html)
+        setFcGames(parsed)
+        cached.current.fc = parsed
+        persist()
+      })
       .catch(() => setFcGames([]))
       .finally(() => setFcLoading(false))
 
     fetchWithTimeout(INTER_URL)
       .then(r => r.text())
-      .then(html => setInterGames(parseFcInterHtml(html)))
+      .then(html => {
+        const parsed = parseFcInterHtml(html)
+        setInterGames(parsed)
+        cached.current.inter = parsed
+        persist()
+      })
       .catch(() => setInterGames([]))
       .finally(() => setInterLoading(false))
 
     fetchWithTimeout(FC_NAISET_URL)
       .then(r => r.text())
-      .then(html => setNaisetGames(parseFcTpsHtml(html)))
+      .then(html => {
+        const parsed = parseFcTpsHtml(html)
+        setNaisetGames(parsed)
+        cached.current.naiset = parsed
+        persist()
+      })
       .catch(() => setNaisetGames([]))
       .finally(() => setNaisetLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const hcUpcoming = hcGames || []
