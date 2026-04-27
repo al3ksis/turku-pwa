@@ -29,18 +29,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* iOS Dynamic Type opt-in: pulls body size from system Settings → Text Size.
-   On Android/desktop this @supports query is false, fallback `font-size: 1rem` stays in effect. */
-@supports (font: -apple-system-body) {
-  body {
-    font: -apple-system-body;
-    font-family: 'DM Sans', system-ui, sans-serif;
-    line-height: 1.5;
-    background: var(--bg);
-    color: var(--text);
-  }
-}
-
 #root {
   max-width: 430px;
   margin: 0 auto;
