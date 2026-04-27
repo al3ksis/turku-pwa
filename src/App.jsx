@@ -10,17 +10,23 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(
     () => localStorage.getItem('turku-app.active-tab') || 'home'
   )
+  const [busEditingInitial, setBusEditingInitial] = useState(false)
 
   function handleTabChange(tab) {
     setActiveTab(tab)
     localStorage.setItem('turku-app.active-tab', tab)
   }
 
+  function goToBusEdit() {
+    handleTabChange('bus')
+    setBusEditingInitial(true)
+  }
+
   return (
     <>
       <main className="app-page">
-        {activeTab === 'home' && <PageHome onNavigate={handleTabChange} />}
-        {activeTab === 'bus' && <PageBus />}
+        {activeTab === 'home' && <PageHome onNavigate={handleTabChange} onGotoBusEdit={goToBusEdit} />}
+        {activeTab === 'bus' && <PageBus initialEditing={busEditingInitial} onConsumeInitial={() => setBusEditingInitial(false)} />}
         {activeTab === 'news' && <PageNews />}
         {activeTab === 'tps' && <PageTPS />}
       </main>

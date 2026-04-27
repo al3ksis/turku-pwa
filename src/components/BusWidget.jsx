@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
 import './BusWidget.css'
 
@@ -88,6 +88,43 @@ export default function BusWidget({ editing = false }) {
   const [editNameValue, setEditNameValue] = useState('')
   const [routeData, setRouteData] = useState(loadRouteData)
   const [routesLoading, setRoutesLoading] = useState(false)
+  const [draggingIdx, setDraggingIdx] = useState(null)
+  const itemRefs = useRef([])
+
+  useEffect(() => {
+    if (draggingIdx == null) return
+
+    function move(e) {
+      const y = e.clientY
+      for (let i = 0; i < itemRefs.current.length; i++) {
+        if (i === draggingIdx) continue
+        const rect = itemRefs.current[i]?.getBoundingClientRect()
+        if (!rect) continue
+        if (y >= rect.top && y <= rect.bottom) {
+          setStops(curr => {
+            const next = [...curr]
+            const [moved] = next.splice(draggingIdx, 1)
+            next.splice(i, 0, moved)
+            localStorage.setItem('busStops', JSON.stringify(next))
+            return next
+          })
+          setDraggingIdx(i)
+          break
+        }
+      }
+    }
+
+    function up() { setDraggingIdx(null) }
+
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+  }, [draggingIdx])
 
   function getDisplayName(stopId) {
     return customNames[stopId] || stopsData[stopId]?.data?.name || stopId
@@ -233,8 +270,16 @@ export default function BusWidget({ editing = false }) {
     return (
       <div className="bus-widget">
         <div className="bus-settings">
+          <div className="bus-edit-hint">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M8 7v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="8" cy="5" r="0.8" fill="currentColor" />
+            </svg>
+            <span>Muutokset näkyvät myös etusivun "Seuraavat bussit" -listassa.</span>
+          </div>
           <div className="stops-list">
-            {stops.map(stopId => {
+            {stops.map((stopId, i) => {
               const rd = routeData[stopId] || { available: [], hidden: [], fetchedAt: 0 }
               const displayName = getDisplayName(stopId)
               const apiName = getApiName(stopId)
@@ -243,7 +288,27 @@ export default function BusWidget({ editing = false }) {
               const showSkeleton = routesLoading && rd.available.length === 0
 
               return (
-                <div key={stopId} className="stop-card card">
+                <div
+                  key={stopId}
+                  ref={el => { itemRefs.current[i] = el }}
+                  className={`stop-card card ${draggingIdx === i ? 'dragging' : ''}`}
+                >
+                  <div className="stop-card-row">
+                    <div
+                      className="stop-card-drag"
+                      onPointerDown={(e) => { e.preventDefault(); setDraggingIdx(i) }}
+                      role="button"
+                      aria-label="Vedä järjestääksesi"
+                    >
+                      <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
+                        <circle cx="2" cy="3" r="1.3" fill="currentColor"/>
+                        <circle cx="8" cy="3" r="1.3" fill="currentColor"/>
+                        <circle cx="2" cy="8" r="1.3" fill="currentColor"/>
+                        <circle cx="8" cy="8" r="1.3" fill="currentColor"/>
+                        <circle cx="2" cy="13" r="1.3" fill="currentColor"/>
+                        <circle cx="8" cy="13" r="1.3" fill="currentColor"/>
+                      </svg>
+                    </div>
                   <div className="stop-card-header">
                     <img src="/foli-logo.svg" alt="" className="bus-stop-logo" />
                     <div className="stop-card-name-col">
@@ -271,6 +336,7 @@ export default function BusWidget({ editing = false }) {
                       )}
                     </div>
                     <button className="remove-btn" onClick={() => removeStop(stopId)} title="Poista">✕</button>
+                  </div>
                   </div>
 
                   <div className="route-chips-section">

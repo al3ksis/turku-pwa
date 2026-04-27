@@ -176,6 +176,27 @@
   gap: 10px;
 }
 
+/* Edit hint banner */
+
+.bus-edit-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(74, 158, 255, 0.08);
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.bus-edit-hint svg {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
 /* Stop card (settings) */
 
 .stop-card {
@@ -185,6 +206,40 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.stop-card.dragging {
+  background: var(--card);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.stop-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stop-card-drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  height: 32px;
+  width: 18px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.stop-card-drag:active {
+  cursor: grabbing;
+}
+
+.stop-card-row > .stop-card-header {
+  flex: 1;
+  min-width: 0;
 }
 
 .stop-card-header {

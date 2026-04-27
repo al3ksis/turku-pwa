@@ -1,9 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PageHeader } from './PageHeader'
 import BusWidget from './BusWidget'
 
-export default function PageBus() {
-  const [editing, setEditing] = useState(false)
+export default function PageBus({ initialEditing = false, onConsumeInitial }) {
+  const [editing, setEditing] = useState(initialEditing)
+
+  useEffect(() => {
+    if (initialEditing && onConsumeInitial) onConsumeInitial()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div>

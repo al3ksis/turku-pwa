@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { fetchWithTimeout } from '../utils/fetch'
 import { PageHeader } from './PageHeader'
 import { FeatureMatchCard } from './MatchCard'
@@ -649,53 +649,21 @@ function BusHomeSection({ stops, departures, hasAnyStops, onEdit }) {
   )
 }
 
-function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose }) {
-  const [order, setOrder] = useState(allStops)
+function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose, onGotoBusEdit }) {
   const [hidden, setHidden] = useState(initialHidden)
-  const [draggingIdx, setDraggingIdx] = useState(null)
-  const itemRefs = useRef([])
 
   function toggleHidden(stopId) {
     setHidden(h => h.includes(stopId) ? h.filter(s => s !== stopId) : [...h, stopId])
   }
 
   function handleDone() {
-    onClose({ order, hidden })
+    onClose({ hidden })
   }
 
-  useEffect(() => {
-    if (draggingIdx == null) return
-
-    function move(e) {
-      const y = e.clientY
-      for (let i = 0; i < itemRefs.current.length; i++) {
-        if (i === draggingIdx) continue
-        const rect = itemRefs.current[i]?.getBoundingClientRect()
-        if (!rect) continue
-        if (y >= rect.top && y <= rect.bottom) {
-          setOrder(curr => {
-            const next = [...curr]
-            const [moved] = next.splice(draggingIdx, 1)
-            next.splice(i, 0, moved)
-            return next
-          })
-          setDraggingIdx(i)
-          break
-        }
-      }
-    }
-
-    function up() { setDraggingIdx(null) }
-
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-    window.addEventListener('pointercancel', up)
-    return () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      window.removeEventListener('pointercancel', up)
-    }
-  }, [draggingIdx])
+  function handleGoto() {
+    onClose({ hidden })
+    onGotoBusEdit?.()
+  }
 
   return (
     <div className="bus-edit-backdrop" onClick={handleDone}>
@@ -703,37 +671,18 @@ function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose 
         <div className="bus-edit-grabber" />
         <div className="bus-edit-header">
           <div className="bus-edit-header-text">
-            <div className="bus-edit-title">Muokkaa pysäkkejä</div>
-            <div className="bus-edit-sub">Vaihda järjestystä (muuttuu myös Bussit-näkymässä) · valitse näytettävät pysäkit</div>
+            <div className="bus-edit-title">Etusivulla näytettävät</div>
+            <div className="bus-edit-sub">Tästä valitset mitkä pysäkit näytetään etusivulla. Järjestystä ja sisältöä hallitaan Bussit-näkymässä.</div>
           </div>
           <button className="bus-edit-done" onClick={handleDone}>Valmis</button>
         </div>
         <div className="bus-edit-list">
-          {order.map((stopId, i) => {
+          {allStops.map(stopId => {
             const visible = !hidden.includes(stopId)
             const apiId = stopId.replace('FOLI:', '')
             const displayName = customNames[stopId] || apiNames[stopId] || apiId
             return (
-              <div
-                key={stopId}
-                ref={el => { itemRefs.current[i] = el }}
-                className={`bus-edit-row ${draggingIdx === i ? 'dragging' : ''}`}
-              >
-                <div
-                  className="bus-edit-handle"
-                  onPointerDown={(e) => { e.preventDefault(); setDraggingIdx(i) }}
-                  aria-label="Vedä järjestääksesi"
-                  role="button"
-                >
-                  <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
-                    <circle cx="2" cy="3" r="1.3" fill="currentColor"/>
-                    <circle cx="8" cy="3" r="1.3" fill="currentColor"/>
-                    <circle cx="2" cy="8" r="1.3" fill="currentColor"/>
-                    <circle cx="8" cy="8" r="1.3" fill="currentColor"/>
-                    <circle cx="2" cy="13" r="1.3" fill="currentColor"/>
-                    <circle cx="8" cy="13" r="1.3" fill="currentColor"/>
-                  </svg>
-                </div>
+              <label key={stopId} className="bus-edit-row">
                 <img src="/foli-logo.svg" alt="" className="bus-edit-logo" />
                 <div className="bus-edit-name-col">
                   <div className="bus-edit-name">{displayName}</div>
@@ -752,13 +701,16 @@ function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose 
                     </svg>
                   )}
                 </button>
-              </div>
+              </label>
             )
           })}
-          {order.length === 0 && (
+          {allStops.length === 0 && (
             <div className="bus-edit-empty">Ei tallennettuja pysäkkejä. Lisää pysäkki Bussit-välilehdellä.</div>
           )}
         </div>
+        <button type="button" className="bus-edit-goto" onClick={handleGoto}>
+          Hallitse pysäkkejä Bussit-näkymässä →
+        </button>
       </div>
     </div>
   )
@@ -852,7 +804,7 @@ function writeCachedBusDepartures(departures) {
 
 // --- PageHome component ---
 
-export default function PageHome({ onNavigate }) {
+export default function PageHome({ onNavigate, onGotoBusEdit }) {
   const [weather, setWeather] = useState(() => readCachedWeather()?.weather ?? null)
   const [airQuality, setAirQuality] = useState(() => readCachedWeather()?.airQuality ?? null)
   const [news, setNews] = useState(() => readCachedNews())
@@ -893,11 +845,7 @@ export default function PageHome({ onNavigate }) {
     if (changed) writeApiNames(cached)
   }
 
-  function handleBusEditClose({ order, hidden }) {
-    if (order.join(',') !== busStops.join(',')) {
-      writeBusStops(order)
-      setBusStops(order)
-    }
+  function handleBusEditClose({ hidden }) {
     if (hidden.join(',') !== busHidden.join(',')) {
       writeHomeHidden(hidden)
       setBusHidden(hidden)
@@ -1118,6 +1066,7 @@ export default function PageHome({ onNavigate }) {
           apiNames={readApiNames()}
           initialHidden={busHidden}
           onClose={handleBusEditClose}
+          onGotoBusEdit={onGotoBusEdit}
         />
       )}
 
