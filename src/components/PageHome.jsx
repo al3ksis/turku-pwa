@@ -701,26 +701,34 @@ function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose,
             const apiId = stopId.replace('FOLI:', '')
             const displayName = customNames[stopId] || apiNames[stopId] || apiId
             return (
-              <label key={stopId} className="bus-edit-row">
+              <div
+                key={stopId}
+                className="bus-edit-row"
+                onClick={() => toggleHidden(stopId)}
+                role="checkbox"
+                tabIndex={0}
+                aria-checked={visible}
+                aria-label={displayName}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    toggleHidden(stopId)
+                  }
+                }}
+              >
                 <img src="/foli-logo.svg" alt="" className="bus-edit-logo" />
                 <div className="bus-edit-name-col">
                   <div className="bus-edit-name">{displayName}</div>
                   <div className="bus-edit-id">Tunnus {apiId}</div>
                 </div>
-                <button
-                  type="button"
-                  className={`bus-edit-checkbox ${visible ? 'checked' : ''}`}
-                  onClick={() => toggleHidden(stopId)}
-                  aria-pressed={visible}
-                  aria-label={visible ? 'Piilota etusivulta' : 'Näytä etusivulla'}
-                >
+                <div className={`bus-edit-checkbox ${visible ? 'checked' : ''}`} aria-hidden="true">
                   {visible && (
-                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 14 14">
                       <path d="M3 7l3 3 5-6" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
-                </button>
-              </label>
+                </div>
+              </div>
             )
           })}
           {allStops.length === 0 && (
@@ -766,25 +774,33 @@ function MatchTeamsEditModal({ teams, initialHidden, onClose, onGotoMatches }) {
           {teams.map(team => {
             const visible = !hidden.includes(team.key)
             return (
-              <label key={team.key} className="bus-edit-row team-edit-row">
+              <div
+                key={team.key}
+                className="bus-edit-row team-edit-row"
+                onClick={() => toggleHidden(team.key)}
+                role="checkbox"
+                tabIndex={0}
+                aria-checked={visible}
+                aria-label={team.name}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    toggleHidden(team.key)
+                  }
+                }}
+              >
                 <div className="bus-edit-name-col">
                   <div className="bus-edit-name">{team.name}</div>
                   <div className="bus-edit-id">{team.sub}</div>
                 </div>
-                <button
-                  type="button"
-                  className={`bus-edit-checkbox ${visible ? 'checked' : ''}`}
-                  onClick={() => toggleHidden(team.key)}
-                  aria-pressed={visible}
-                  aria-label={visible ? 'Piilota etusivulta' : 'Näytä etusivulla'}
-                >
+                <div className={`bus-edit-checkbox ${visible ? 'checked' : ''}`} aria-hidden="true">
                   {visible && (
-                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 14 14">
                       <path d="M3 7l3 3 5-6" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
-                </button>
-              </label>
+                </div>
+              </div>
             )
           })}
         </div>
