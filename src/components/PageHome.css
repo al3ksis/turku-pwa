@@ -724,6 +724,10 @@
   border-bottom: none;
 }
 
+.bus-edit-row.team-edit-row {
+  grid-template-columns: 1fr 32px;
+}
+
 .bus-edit-logo {
   width: 24px;
   height: 24px;

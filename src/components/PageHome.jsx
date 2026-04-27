@@ -568,6 +568,25 @@ function writeHomeHidden(hidden) {
   } catch { /* silent */ }
 }
 
+function readHomeTeamsHidden() {
+  try {
+    return JSON.parse(localStorage.getItem('homeTeamsHidden') || '[]')
+  } catch { return [] }
+}
+
+function writeHomeTeamsHidden(hidden) {
+  try {
+    localStorage.setItem('homeTeamsHidden', JSON.stringify(hidden))
+  } catch { /* silent */ }
+}
+
+const HOME_TEAMS = [
+  { key: 'fc',     name: 'FC TPS',        sub: 'Veikkausliiga · Suomen Cup' },
+  { key: 'hc',     name: 'HC TPS',        sub: 'Liiga' },
+  { key: 'inter',  name: 'FC Inter',      sub: 'Veikkausliiga · Suomen Cup' },
+  { key: 'naiset', name: 'FC TPS Naiset', sub: 'Kansallinen Ykkönen' },
+]
+
 function writeBusStops(stops) {
   try {
     localStorage.setItem('busStops', JSON.stringify(stops))
@@ -716,6 +735,67 @@ function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose,
   )
 }
 
+function MatchTeamsEditModal({ teams, initialHidden, onClose, onGotoMatches }) {
+  const [hidden, setHidden] = useState(initialHidden)
+
+  function toggleHidden(key) {
+    setHidden(h => h.includes(key) ? h.filter(k => k !== key) : [...h, key])
+  }
+
+  function handleDone() {
+    onClose({ hidden })
+  }
+
+  function handleGoto() {
+    onClose({ hidden })
+    onGotoMatches?.()
+  }
+
+  return (
+    <div className="bus-edit-backdrop" onClick={handleDone}>
+      <div className="bus-edit-sheet" onClick={e => e.stopPropagation()}>
+        <div className="bus-edit-grabber" />
+        <div className="bus-edit-header">
+          <div className="bus-edit-header-text">
+            <div className="bus-edit-title">Etusivulla näytettävät</div>
+            <div className="bus-edit-sub">Valitse minkä joukkueiden seuraavat kotiottelut näytetään etusivulla. Laajemmat otteluohjelmat löytyvät Ottelut-näkymästä.</div>
+          </div>
+          <button className="bus-edit-done" onClick={handleDone}>Valmis</button>
+        </div>
+        <div className="bus-edit-list">
+          {teams.map(team => {
+            const visible = !hidden.includes(team.key)
+            return (
+              <label key={team.key} className="bus-edit-row team-edit-row">
+                <div className="bus-edit-name-col">
+                  <div className="bus-edit-name">{team.name}</div>
+                  <div className="bus-edit-id">{team.sub}</div>
+                </div>
+                <button
+                  type="button"
+                  className={`bus-edit-checkbox ${visible ? 'checked' : ''}`}
+                  onClick={() => toggleHidden(team.key)}
+                  aria-pressed={visible}
+                  aria-label={visible ? 'Piilota etusivulta' : 'Näytä etusivulla'}
+                >
+                  {visible && (
+                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                      <path d="M3 7l3 3 5-6" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              </label>
+            )
+          })}
+        </div>
+        <button type="button" className="bus-edit-goto" onClick={handleGoto}>
+          Laajemmat otteluohjelmat Ottelut-näkymässä →
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // --- Caches (stale-while-revalidate via localStorage) ---
 
 const TPS_CACHE_KEY = 'tpsHomeGames'
@@ -817,6 +897,8 @@ export default function PageHome({ onNavigate, onGotoBusEdit }) {
   const [busHidden, setBusHidden] = useState(readHomeHidden)
   const [busDepartures, setBusDepartures] = useState(readCachedBusDepartures)
   const [editingBuses, setEditingBuses] = useState(false)
+  const [teamsHidden, setTeamsHidden] = useState(readHomeTeamsHidden)
+  const [editingTeams, setEditingTeams] = useState(false)
   const visibleBusStops = busStops.filter(s => !busHidden.includes(s))
 
   async function doFetchBuses() {
@@ -851,6 +933,14 @@ export default function PageHome({ onNavigate, onGotoBusEdit }) {
       setBusHidden(hidden)
     }
     setEditingBuses(false)
+  }
+
+  function handleTeamsEditClose({ hidden }) {
+    if (hidden.join(',') !== teamsHidden.join(',')) {
+      writeHomeTeamsHidden(hidden)
+      setTeamsHidden(hidden)
+    }
+    setEditingTeams(false)
   }
 
   async function doFetchWeather() {
@@ -1071,28 +1161,47 @@ export default function PageHome({ onNavigate, onGotoBusEdit }) {
 
       {/* Next home match section */}
       {(() => {
-        const homeMatches = [
-          fcHomeGame && { game: fcHomeGame, league: FC_LEAGUE, teamName: 'FC TPS' },
-          hcHomeGame && { game: hcHomeGame, league: HC_LEAGUE, teamName: 'HC TPS' },
-          interHomeGame && { game: interHomeGame, league: INTER_LEAGUE, teamName: 'FC Inter', teamShortName: 'Inter' },
-          naisetHomeGame && { game: naisetHomeGame, league: NAISET_LEAGUE, teamName: 'FC TPS Naiset' },
-        ].filter(Boolean).sort((a, b) => a.game.date - b.game.date)
-        if (!homeMatches.length) return null
+        const allMatches = [
+          fcHomeGame && { teamKey: 'fc', game: fcHomeGame, league: FC_LEAGUE, teamName: 'FC TPS' },
+          hcHomeGame && { teamKey: 'hc', game: hcHomeGame, league: HC_LEAGUE, teamName: 'HC TPS' },
+          interHomeGame && { teamKey: 'inter', game: interHomeGame, league: INTER_LEAGUE, teamName: 'FC Inter', teamShortName: 'Inter' },
+          naisetHomeGame && { teamKey: 'naiset', game: naisetHomeGame, league: NAISET_LEAGUE, teamName: 'FC TPS Naiset' },
+        ].filter(Boolean)
+        if (!allMatches.length) return null
+        const visibleMatches = allMatches
+          .filter(m => !teamsHidden.includes(m.teamKey))
+          .sort((a, b) => a.game.date - b.game.date)
         return (
           <div className="home-section">
             <div className="home-section-heading">
               <div className="home-section-title">
-                {homeMatches.length > 1 ? 'Seuraavat kotiottelut' : 'Seuraava kotiottelu'}
+                {visibleMatches.length === 1 ? 'Seuraava kotiottelu' : 'Seuraavat kotiottelut'}
               </div>
+              <button className="home-section-edit" onClick={() => setEditingTeams(true)}>Muokkaa</button>
             </div>
-            <div className="next-match-list">
-              {homeMatches.map((m, i) => (
-                <NextHomeMatchCard key={i} game={m.game} league={m.league} teamName={m.teamName} teamShortName={m.teamShortName} />
-              ))}
-            </div>
+            {visibleMatches.length === 0 ? (
+              <div className="bus-home-card bus-home-empty-card">
+                Kaikki joukkueet piilotettu — valitse näytettävät Muokkaa-painikkeesta.
+              </div>
+            ) : (
+              <div className="next-match-list">
+                {visibleMatches.map((m, i) => (
+                  <NextHomeMatchCard key={i} game={m.game} league={m.league} teamName={m.teamName} teamShortName={m.teamShortName} />
+                ))}
+              </div>
+            )}
           </div>
         )
       })()}
+
+      {editingTeams && (
+        <MatchTeamsEditModal
+          teams={HOME_TEAMS}
+          initialHidden={teamsHidden}
+          onClose={handleTeamsEditClose}
+          onGotoMatches={() => onNavigate?.('tps')}
+        />
+      )}
 
 
       {/* News section */}
