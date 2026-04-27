@@ -249,6 +249,7 @@ function GameListItem({ game }) {
   const venueStr = isHc ? (game.location || 'Veritas Areena') : game.venue
   const venueLabel = capitalize(isHc ? hcVenueLabel(game.isHome) : fcVenueLabel(game.isHome, game.opponent))
   const colors = matchColorScheme(game)
+  const badge = leagueBadgeColors(game)
   const teamShort = teamShortNameFor(game)
 
   const today = new Date()
@@ -265,7 +266,7 @@ function GameListItem({ game }) {
   return (
     <div className="next-match-card" style={{ borderLeftColor: colors.border }}>
       <div className="next-match-meta">
-        <span className="next-match-badge" style={{ background: colors.badgeBg, color: colors.badgeText }}>
+        <span className="next-match-badge" style={{ background: badge.bg, color: badge.text }}>
           {leagueLabel(game)}
         </span>
         <span className="next-match-date">{dateLabel}</span>
