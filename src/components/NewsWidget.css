@@ -10,7 +10,7 @@
 }
 
 .news-header h2 {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .news-logo {
@@ -48,7 +48,7 @@
 
 .news-source {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 /* Loading */

@@ -15,7 +15,7 @@
   border: none;
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -50,7 +50,7 @@
 }
 
 .bus-stop-name {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -79,7 +79,7 @@
 .bus-line-badge {
   background: var(--border);
   color: var(--text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   padding: 4px 6px;
   border-radius: 6px;
@@ -93,7 +93,7 @@
 }
 
 .bus-destination {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -101,13 +101,13 @@
 }
 
 .bus-dep-time {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .bus-dep-minutes {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text);
   min-width: 44px;
@@ -134,7 +134,7 @@
 
 .bus-stop-error {
   padding: 8px 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   display: flex;
   flex-direction: column;
@@ -150,14 +150,14 @@
 }
 
 .bus-empty-hint {
-  font-size: 13px;
+  font-size: 0.8125rem;
   margin-top: 4px;
 }
 
 /* No tracked routes */
 
 .bus-no-tracked {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   padding: 10px 0;
 }
@@ -186,7 +186,7 @@
   border: 1px solid rgba(74, 158, 255, 0.2);
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1.4;
 }
@@ -261,7 +261,7 @@
   background: none;
   border: none;
   color: var(--text);
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: -0.2px;
   cursor: pointer;
@@ -275,7 +275,7 @@
 }
 
 .stop-card-sub {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -287,7 +287,7 @@
   border: 1px solid var(--accent);
   padding: 8px 10px;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-family: inherit;
   box-sizing: border-box;
 }
@@ -299,7 +299,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -322,7 +322,7 @@
 }
 
 .route-chips-label {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -330,7 +330,7 @@
 }
 
 .route-chips-clear {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--accent);
   background: none;
@@ -351,7 +351,7 @@
   gap: 4px;
   padding: 5px 11px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
   border: none;
@@ -370,7 +370,7 @@
 }
 
 .chip-check {
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .route-chip-skeleton {
@@ -380,7 +380,7 @@
 }
 
 .route-chips-empty {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -399,7 +399,7 @@
 }
 
 .add-stop-label {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -407,7 +407,7 @@
 }
 
 .add-stop-map-link {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--accent);
   text-decoration: none;
@@ -425,6 +425,6 @@
   border: 1px solid var(--border);
   padding: 10px 12px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: inherit;
 }

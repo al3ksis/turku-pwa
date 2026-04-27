@@ -10,7 +10,7 @@
 .quote-text {
   font-family: 'Georgia', 'Times New Roman', serif;
   font-style: italic;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 600;
   letter-spacing: -0.2px;
   line-height: 1.3;
@@ -26,7 +26,7 @@
 }
 
 .quote-caption {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-muted);
 }
 
@@ -41,7 +41,7 @@
 }
 
 .quote-caption-daylight {
-  font-size: 12px;
+  font-size: 0.75rem;
   letter-spacing: 0;
 }
 
@@ -79,7 +79,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 1.75rem;
   flex-shrink: 0;
 }
 
@@ -90,14 +90,14 @@
 }
 
 .weather-temp {
-  font-size: 32px;
+  font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.5px;
   line-height: 1;
 }
 
 .weather-condition {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
   margin-top: 2px;
 }
@@ -128,7 +128,7 @@
 }
 
 .sun-label {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -136,7 +136,7 @@
 }
 
 .sun-value {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -153,7 +153,7 @@
 }
 
 .section-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -185,22 +185,22 @@
 }
 
 .hourly-hour {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-muted);
 }
 
 .hourly-emoji {
-  font-size: 22px;
+  font-size: 1.375rem;
   line-height: 1;
 }
 
 .hourly-temp {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
 .hourly-precip {
-  font-size: 10px;
+  font-size: 0.625rem;
 }
 
 .hourly-precip-rain {
@@ -212,7 +212,7 @@
 }
 
 .hourly-wind {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-muted);
 }
 
@@ -237,7 +237,7 @@
 }
 
 .aq-label {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -253,13 +253,13 @@
 }
 
 .uv-value {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 
 .uv-text {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-secondary);
 }
 
@@ -292,7 +292,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .pollen-name {
@@ -322,7 +322,7 @@
 }
 
 .pollen-none {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   padding-top: 2px;
 }
@@ -350,7 +350,7 @@
 }
 
 .next-match-badge {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.5px;
   padding: 4px 8px;
@@ -358,13 +358,13 @@
 }
 
 .next-match-date {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text);
   font-weight: 500;
 }
 
 .next-match-countdown {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   margin-left: auto;
 }
@@ -381,14 +381,14 @@
 }
 
 .next-match-title {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 700;
   letter-spacing: -0.4px;
   line-height: 1.15;
 }
 
 .next-match-venue {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   margin-top: 4px;
 }
@@ -401,12 +401,12 @@
 }
 
 .next-match-time-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
 .next-match-time-value {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 700;
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
@@ -427,19 +427,19 @@
 }
 
 .home-section-title {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.2px;
 }
 
 .home-section-sub {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 1px;
 }
 
 .home-section-meta {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -449,7 +449,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--accent-green);
   letter-spacing: 0.4px;
@@ -501,7 +501,7 @@
 }
 
 .bus-item-tag {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
@@ -510,7 +510,7 @@
 }
 
 .bus-item-route {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -518,13 +518,13 @@
 }
 
 .bus-item-stop {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
 
 .bus-item-mins {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   flex-shrink: 0;
   white-space: nowrap;
@@ -537,7 +537,7 @@
   background: none;
   border: none;
   color: var(--accent);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   padding: 4px 0;
   cursor: pointer;
@@ -568,7 +568,7 @@
 }
 
 .bus-home-stop-name {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text);
   overflow: hidden;
@@ -579,7 +579,7 @@
 .bus-home-line {
   background: var(--border);
   color: var(--text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   padding: 4px 9px;
   border-radius: 6px;
@@ -594,7 +594,7 @@
 }
 
 .bus-home-mins {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -607,7 +607,7 @@
 }
 
 .bus-home-empty {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   grid-column: 3 / 5;
   text-align: right;
@@ -625,7 +625,7 @@
   padding: 16px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* Bus edit modal (bottom sheet) */
@@ -682,13 +682,13 @@
 }
 
 .bus-edit-title {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 
 .bus-edit-sub {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -697,7 +697,7 @@
   background: none;
   border: none;
   color: var(--accent-green);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   padding: 4px 0;
@@ -746,7 +746,7 @@
 }
 
 .bus-edit-name {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -754,7 +754,7 @@
 }
 
 .bus-edit-id {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 1px;
 }
@@ -781,7 +781,7 @@
   text-align: center;
   color: var(--text-muted);
   padding: 24px 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .bus-edit-goto {
@@ -792,7 +792,7 @@
   border: 1px solid var(--accent);
   padding: 12px 16px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -817,13 +817,13 @@
 }
 
 .news-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.35;
 }
 
 .news-sub {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 4px;
 }
