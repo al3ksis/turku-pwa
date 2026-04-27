@@ -1122,23 +1122,29 @@ export default function PageHome({ onNavigate }) {
       )}
 
       {/* Next home match section */}
-      {(fcHomeGame || hcHomeGame || interHomeGame || naisetHomeGame) && (
-        <div className="home-section">
-          <div className="home-section-heading">
-            <div className="home-section-title">
-              {[fcHomeGame, hcHomeGame, interHomeGame, naisetHomeGame].filter(Boolean).length > 1
-                ? 'Seuraavat kotiottelut'
-                : 'Seuraava kotiottelu'}
+      {(() => {
+        const homeMatches = [
+          fcHomeGame && { game: fcHomeGame, league: FC_LEAGUE, teamName: 'FC TPS' },
+          hcHomeGame && { game: hcHomeGame, league: HC_LEAGUE, teamName: 'HC TPS' },
+          interHomeGame && { game: interHomeGame, league: INTER_LEAGUE, teamName: 'FC Inter', teamShortName: 'Inter' },
+          naisetHomeGame && { game: naisetHomeGame, league: NAISET_LEAGUE, teamName: 'FC TPS Naiset' },
+        ].filter(Boolean).sort((a, b) => a.game.date - b.game.date)
+        if (!homeMatches.length) return null
+        return (
+          <div className="home-section">
+            <div className="home-section-heading">
+              <div className="home-section-title">
+                {homeMatches.length > 1 ? 'Seuraavat kotiottelut' : 'Seuraava kotiottelu'}
+              </div>
+            </div>
+            <div className="next-match-list">
+              {homeMatches.map((m, i) => (
+                <NextHomeMatchCard key={i} game={m.game} league={m.league} teamName={m.teamName} teamShortName={m.teamShortName} />
+              ))}
             </div>
           </div>
-          <div className="next-match-list">
-            {fcHomeGame && <NextHomeMatchCard game={fcHomeGame} league={FC_LEAGUE} teamName="FC TPS" />}
-            {hcHomeGame && <NextHomeMatchCard game={hcHomeGame} league={HC_LEAGUE} teamName="HC TPS" />}
-            {interHomeGame && <NextHomeMatchCard game={interHomeGame} league={INTER_LEAGUE} teamName="FC Inter" teamShortName="Inter" />}
-            {naisetHomeGame && <NextHomeMatchCard game={naisetHomeGame} league={NAISET_LEAGUE} teamName="FC TPS Naiset" />}
-          </div>
-        </div>
-      )}
+        )
+      })()}
 
 
       {/* News section */}
