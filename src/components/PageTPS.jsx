@@ -369,7 +369,7 @@ export default function PageTPS() {
 
   return (
     <div className="page-tps">
-      <PageHeader title="OTTELUT" />
+      <PageHeader title="Ottelut" />
 
       <div className="tps-tabs">
         <button className={`tps-tab${tab === 'all' ? ' active' : ''}`} onClick={() => setTab('all')}>Kaikki</button>
