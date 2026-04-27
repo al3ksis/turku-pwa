@@ -694,7 +694,7 @@ function BusEditModal({ allStops, customNames, apiNames, initialHidden, onClose 
         <div className="bus-edit-header">
           <div className="bus-edit-header-text">
             <div className="bus-edit-title">Muokkaa pysäkkejä</div>
-            <div className="bus-edit-sub">Vedä järjestääksesi · valitse näytettäväksi</div>
+            <div className="bus-edit-sub">Vaihda järjestystä (muuttuu myös Bussit-näkymässä) · valitse näytettävät pysäkit</div>
           </div>
           <button className="bus-edit-done" onClick={handleDone}>Valmis</button>
         </div>
