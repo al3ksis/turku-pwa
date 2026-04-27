@@ -1013,29 +1013,28 @@ export default function PageHome({ onNavigate, onGotoBusEdit }) {
           )}
         </div>
 
-        {sunrise && sunset && (
-          <div className="weather-sun-strip">
-            <div className="sun-cell">
-              <div className="sun-label">NOUSI</div>
-              <div className="sun-value">{formatTimeStr(sunrise)}</div>
-            </div>
-            <div className="sun-cell sun-cell-center">
-              <div className="sun-label">PÄIVÄN PITUUS</div>
-              <div className="sun-value">
-                {daylight ? `${daylight.hours}t ${daylight.minutes}min` : '—'}
-              </div>
-            </div>
-            <div className="sun-cell sun-cell-right">
-              <div className="sun-label">LASKEE</div>
-              <div className="sun-value sun-value-orange">{formatTimeStr(sunset)}</div>
-            </div>
-          </div>
-        )}
-
         {weatherExpanded && (
           <div className="weather-expanded">
             {sunrise && sunset && (
-              <SunArc sunrise={sunrise} sunset={sunset} />
+              <>
+                <SunArc sunrise={sunrise} sunset={sunset} />
+                <div className="weather-sun-strip">
+                  <div className="sun-cell">
+                    <div className="sun-label">NOUSI</div>
+                    <div className="sun-value">{formatTimeStr(sunrise)}</div>
+                  </div>
+                  <div className="sun-cell sun-cell-center">
+                    <div className="sun-label">PÄIVÄN PITUUS</div>
+                    <div className="sun-value">
+                      {daylight ? `${daylight.hours}t ${daylight.minutes}min` : '—'}
+                    </div>
+                  </div>
+                  <div className="sun-cell sun-cell-right">
+                    <div className="sun-label">LASKEE</div>
+                    <div className="sun-value sun-value-orange">{formatTimeStr(sunset)}</div>
+                  </div>
+                </div>
+              </>
             )}
             {hourlyForecast.length > 0 && (
               <>
