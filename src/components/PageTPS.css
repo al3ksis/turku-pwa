@@ -5,18 +5,9 @@
 
 .tps-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.tps-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.tps-tab {
-  flex-shrink: 0;
 }
 
 .tps-tab {
