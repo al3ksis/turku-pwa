@@ -19,16 +19,17 @@ function reviveList(list, dateField) {
 function readCachedTpsList() {
   try {
     const raw = localStorage.getItem(TPS_LIST_CACHE_KEY)
-    if (!raw) return { hc: null, fc: null, inter: null, naiset: null }
+    if (!raw) return { hc: null, fc: null, inter: null, naiset: null, fcCup: null }
     const parsed = JSON.parse(raw)
     return {
       hc: reviveList(parsed.hc, 'start'),
       fc: reviveList(parsed.fc, 'date'),
       inter: reviveList(parsed.inter, 'date'),
       naiset: reviveList(parsed.naiset, 'date'),
+      fcCup: reviveList(parsed.fcCup, 'date'),
     }
   } catch {
-    return { hc: null, fc: null, inter: null, naiset: null }
+    return { hc: null, fc: null, inter: null, naiset: null, fcCup: null }
   }
 }
 
@@ -46,6 +47,8 @@ const INTER_PAGE = 'https://fcinter.fi/ottelut/edustus'
 const INTER_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(INTER_PAGE)}`
 const FC_NAISET_PAGE = 'https://fc.tps.fi/ottelut/naisten-edustus/'
 const FC_NAISET_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_NAISET_PAGE)}`
+const FC_CUP_PAGE = 'https://fc.tps.fi/ottelut/suomen-cup/'
+const FC_CUP_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_CUP_PAGE)}`
 
 // --- Parsers ---
 
@@ -88,7 +91,7 @@ function parseFcTpsHtml(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html')
   const games = []
   const now = new Date()
-  const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4})\s+(\d{1,2})\.(\d{2})/
+  const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4})\s+(\d{1,2})[.:](\d{2})(?::\d{2})?/
 
   for (const row of doc.querySelectorAll('tr')) {
     const cells = Array.from(row.querySelectorAll('td'))
@@ -221,14 +224,14 @@ function matchColorScheme(game) {
 function leagueLabel(game) {
   if (game.team === 'hc') return 'LIIGA'
   if (game.team === 'naiset') return 'KANSALLINEN YKKÖNEN'
-  if (game.competition === 'Cup') return 'CUP'
+  if (game.competition === 'Cup') return 'SUOMEN CUP'
   return 'VEIKKAUSLIIGA'
 }
 
 function leagueBadgeColors(game) {
   if (game.team === 'hc') return { bg: 'rgba(30, 136, 229, 0.18)', text: '#5dabe5' }
   if (game.team === 'naiset') return { bg: 'rgba(55, 42, 149, 0.22)', text: '#b3a8f5' }
-  if (game.competition === 'Cup') return { bg: 'rgba(249, 115, 22, 0.18)', text: '#fb923c' }
+  if (game.competition === 'Cup') return { bg: 'rgba(68, 161, 41, 0.18)', text: '#7dd362' }
   return { bg: 'rgba(212, 160, 23, 0.18)', text: '#d4a017' }
 }
 
@@ -343,10 +346,12 @@ export default function PageOttelut() {
   const [fcGames, setFcGames] = useState(cached.current.fc)
   const [interGames, setInterGames] = useState(cached.current.inter)
   const [naisetGames, setNaisetGames] = useState(cached.current.naiset)
+  const [fcCupGames, setFcCupGames] = useState(cached.current.fcCup)
   const [hcLoading, setHcLoading] = useState(true)
   const [fcLoading, setFcLoading] = useState(true)
   const [interLoading, setInterLoading] = useState(true)
   const [naisetLoading, setNaisetLoading] = useState(true)
+  const [fcCupLoading, setFcCupLoading] = useState(true)
 
   useEffect(() => {
     function persist() {
@@ -396,6 +401,17 @@ export default function PageOttelut() {
       })
       .catch(() => setNaisetGames([]))
       .finally(() => setNaisetLoading(false))
+
+    fetchWithTimeout(FC_CUP_URL)
+      .then(r => r.text())
+      .then(html => {
+        const parsed = parseFcTpsHtml(html)
+        setFcCupGames(parsed)
+        cached.current.fcCup = parsed
+        persist()
+      })
+      .catch(() => setFcCupGames([]))
+      .finally(() => setFcCupLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -403,9 +419,12 @@ export default function PageOttelut() {
   const fcUpcoming = fcGames || []
   const interUpcoming = interGames || []
   const naisetUpcoming = naisetGames || []
+  const fcCupUpcoming = fcCupGames || []
 
   const hcArr = hcUpcoming.map(g => ({ ...g, team: 'hc', sortDate: g.start }))
-  const fcArr = fcUpcoming.map(g => ({ ...g, team: 'fc', sortDate: g.date }))
+  const fcArr = [...fcUpcoming, ...fcCupUpcoming]
+    .map(g => ({ ...g, team: 'fc', sortDate: g.date }))
+    .sort((a, b) => a.sortDate - b.sortDate)
   const interArr = interUpcoming.map(g => ({ ...g, team: 'inter', sortDate: g.date }))
   const naisetArr = naisetUpcoming.map(g => ({ ...g, team: 'naiset', sortDate: g.date }))
 
@@ -424,7 +443,7 @@ export default function PageOttelut() {
   const nextSet = new Set(nextGames)
   const upcomingGames = visibleGames.filter(g => !nextSet.has(g))
   const nextLabel = nextGames.length > 1 ? 'SEURAAVAT OTTELUT' : 'SEURAAVA OTTELU'
-  const loading = hcLoading || fcLoading || interLoading || naisetLoading
+  const loading = hcLoading || fcLoading || interLoading || naisetLoading || fcCupLoading
   const showSeasonEnded = !hcLoading && hcUpcoming.length === 0 && (tab === 'all' || tab === 'hc')
 
   return (

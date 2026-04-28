@@ -29,6 +29,9 @@ const FC_INTER_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_INTE
 const FC_NAISET_PAGE = 'https://fc.tps.fi/ottelut/naisten-edustus/'
 const FC_NAISET_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_NAISET_PAGE)}`
 
+const FC_CUP_PAGE = 'https://fc.tps.fi/ottelut/suomen-cup/'
+const FC_CUP_URL = `/.netlify/functions/proxy?url=${encodeURIComponent(FC_CUP_PAGE)}`
+
 const DIGITRANSIT_URL = 'https://api.digitransit.fi/routing/v2/waltti/gtfs/v1'
 
 // --- Weather codes ---
@@ -198,6 +201,13 @@ const NAISET_LEAGUE = {
   borderColor: '#372A95',
   badgeBg: 'rgba(55, 42, 149, 0.22)',
   badgeText: '#b3a8f5',
+}
+
+const FC_CUP_LEAGUE = {
+  label: 'SUOMEN CUP',
+  borderColor: '#44a129',
+  badgeBg: 'rgba(68, 161, 41, 0.18)',
+  badgeText: '#7dd362',
 }
 
 function NextHomeMatchCard({ game, league, teamName, teamShortName = 'TPS' }) {
@@ -423,7 +433,7 @@ function parseHcNextHomeGame(icsText) {
 function parseFcNextHomeGame(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html')
   const now = new Date()
-  const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4})\s+(\d{1,2})\.(\d{2})/
+  const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4})\s+(\d{1,2})[.:](\d{2})(?::\d{2})?/
 
   for (const row of doc.querySelectorAll('tr')) {
     const cells = Array.from(row.querySelectorAll('td'))
@@ -991,21 +1001,34 @@ export default function PageHome({ onNavigate, onGotoBusEdit }) {
 
   async function doFetchTPS() {
     try {
-      const [hcRes, fcRes, interRes, naisetRes] = await Promise.all([
+      const [hcRes, fcRes, interRes, naisetRes, fcCupRes] = await Promise.all([
         fetchWithTimeout(TPS_ICS_URL),
         fetchWithTimeout(FC_TPS_URL),
         fetchWithTimeout(FC_INTER_URL),
         fetchWithTimeout(FC_NAISET_URL),
+        fetchWithTimeout(FC_CUP_URL),
       ])
       let hc = null, fc = null, inter = null, naiset = null
       if (hcRes.ok) {
         hc = parseHcNextHomeGame(await hcRes.text())
         setHcHomeGame(hc)
       }
-      if (fcRes.ok) {
-        fc = parseFcNextHomeGame(await fcRes.text())
-        setFcHomeGame(fc)
+
+      // FC TPS: pick earliest home game between Veikkausliiga and Suomen Cup
+      let fcVeikkaus = null, fcCup = null
+      if (fcRes.ok) fcVeikkaus = parseFcNextHomeGame(await fcRes.text())
+      if (fcCupRes.ok) fcCup = parseFcNextHomeGame(await fcCupRes.text())
+      if (fcVeikkaus && fcCup) {
+        fc = fcVeikkaus.date <= fcCup.date
+          ? { ...fcVeikkaus, competition: 'Veikkausliiga' }
+          : { ...fcCup, competition: 'Cup' }
+      } else if (fcVeikkaus) {
+        fc = { ...fcVeikkaus, competition: 'Veikkausliiga' }
+      } else if (fcCup) {
+        fc = { ...fcCup, competition: 'Cup' }
       }
+      if (fc) setFcHomeGame(fc)
+
       if (interRes.ok) {
         inter = parseFcInterNextHomeGame(await interRes.text())
         setInterHomeGame(inter)
@@ -1177,8 +1200,9 @@ export default function PageHome({ onNavigate, onGotoBusEdit }) {
 
       {/* Next home match section */}
       {(() => {
+        const fcLeague = fcHomeGame?.competition === 'Cup' ? FC_CUP_LEAGUE : FC_LEAGUE
         const allMatches = [
-          fcHomeGame && { teamKey: 'fc', game: fcHomeGame, league: FC_LEAGUE, teamName: 'FC TPS' },
+          fcHomeGame && { teamKey: 'fc', game: fcHomeGame, league: fcLeague, teamName: 'FC TPS' },
           hcHomeGame && { teamKey: 'hc', game: hcHomeGame, league: HC_LEAGUE, teamName: 'HC TPS' },
           interHomeGame && { teamKey: 'inter', game: interHomeGame, league: INTER_LEAGUE, teamName: 'FC Inter', teamShortName: 'Inter' },
           naisetHomeGame && { teamKey: 'naiset', game: naisetHomeGame, league: NAISET_LEAGUE, teamName: 'FC TPS Naiset' },
