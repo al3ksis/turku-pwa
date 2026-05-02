@@ -13,3 +13,11 @@ createRoot(document.getElementById('root')).render(
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
 }
+
+// Anonymous daily visit ping (one per device per day)
+const today = new Date().toISOString().slice(0, 10)
+if (localStorage.getItem('lastTrackDate') !== today) {
+  fetch('/.netlify/functions/track', { method: 'POST' })
+    .then(() => localStorage.setItem('lastTrackDate', today))
+    .catch(() => { /* silent */ })
+}
