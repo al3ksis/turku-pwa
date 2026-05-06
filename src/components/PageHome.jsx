@@ -467,6 +467,18 @@ function parseFcNextHomeGame(html) {
   return null
 }
 
+// Veikkausliiga 2026 -joukkueet (lower-case substring match). Jos vastustaja
+// ei ole tässä listassa, ottelu on todennäköisesti Suomen Cup.
+const VEIKKAUSLIIGA_TEAMS = [
+  'kups', 'inter', 'oulu', 'tps', 'hjk', 'lahti', 'vps', 'sjk',
+  'jaro', 'mariehamn', 'ifk', 'ilves', 'haka', 'gnistan', 'kupittaa',
+]
+
+function isVeikkausliigaOpponent(opponent) {
+  const o = (opponent || '').toLowerCase()
+  return VEIKKAUSLIIGA_TEAMS.some(team => o.includes(team))
+}
+
 function parseFcInterNextHomeGame(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html')
   const now = new Date()
@@ -515,7 +527,8 @@ function parseFcInterNextHomeGame(html) {
       break
     }
 
-    return { date, opponent: away, venue: venue || 'Veritas Stadion' }
+    const competition = isVeikkausliigaOpponent(away) ? 'Veikkausliiga' : 'Cup'
+    return { date, opponent: away, venue: venue || 'Veritas Stadion', competition }
   }
   return null
 }
@@ -1201,10 +1214,11 @@ export default function PageHome({ onNavigate, onGotoBusEdit }) {
       {/* Next home match section */}
       {(() => {
         const fcLeague = fcHomeGame?.competition === 'Cup' ? FC_CUP_LEAGUE : FC_LEAGUE
+        const interLeague = interHomeGame?.competition === 'Cup' ? FC_CUP_LEAGUE : INTER_LEAGUE
         const allMatches = [
           fcHomeGame && { teamKey: 'fc', game: fcHomeGame, league: fcLeague, teamName: 'FC TPS' },
           hcHomeGame && { teamKey: 'hc', game: hcHomeGame, league: HC_LEAGUE, teamName: 'HC TPS' },
-          interHomeGame && { teamKey: 'inter', game: interHomeGame, league: INTER_LEAGUE, teamName: 'FC Inter', teamShortName: 'Inter' },
+          interHomeGame && { teamKey: 'inter', game: interHomeGame, league: interLeague, teamName: 'FC Inter', teamShortName: 'Inter' },
           naisetHomeGame && { teamKey: 'naiset', game: naisetHomeGame, league: NAISET_LEAGUE, teamName: 'FC TPS Naiset' },
         ].filter(Boolean)
         if (!allMatches.length) return null

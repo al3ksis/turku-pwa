@@ -140,6 +140,18 @@ function parseFcTpsHtml(html) {
   return games.sort((a, b) => a.date - b.date)
 }
 
+// Veikkausliiga 2026 -joukkueet (lower-case substring match). Jos vastustaja
+// ei ole tässä listassa, ottelu on todennäköisesti Suomen Cup.
+const VEIKKAUSLIIGA_TEAMS = [
+  'kups', 'inter', 'oulu', 'tps', 'hjk', 'lahti', 'vps', 'sjk',
+  'jaro', 'mariehamn', 'ifk', 'ilves', 'haka', 'gnistan', 'kupittaa',
+]
+
+function isVeikkausliigaOpponent(opponent) {
+  const o = (opponent || '').toLowerCase()
+  return VEIKKAUSLIIGA_TEAMS.some(team => o.includes(team))
+}
+
 function parseInterMatchLi(li, dateRe) {
   const fullText = li.textContent
   const dm = fullText.match(dateRe)
@@ -171,7 +183,9 @@ function parseInterMatchLi(li, dateRe) {
   }
 
   const isHome = home.toLowerCase().includes('inter')
-  return { date, opponent: isHome ? away : home, isHome, venue }
+  const opponent = isHome ? away : home
+  const competition = isVeikkausliigaOpponent(opponent) ? 'Veikkausliiga' : 'Cup'
+  return { date, opponent, isHome, venue, competition }
 }
 
 function parseFcInterHtml(html) {
